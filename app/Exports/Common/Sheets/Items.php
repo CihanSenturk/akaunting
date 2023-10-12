@@ -9,7 +9,13 @@ class Items extends Export
 {
     public function collection()
     {
-        return Model::with('category')->collectForExport($this->ids);
+        $model = Model::with('category')->collectForExport($this->ids);
+
+        if (empty($this->ids)) {
+            $this->ids = $model->pluck('id')->toArray();
+        }
+
+        return $model;
     }
 
     public function map($model): array

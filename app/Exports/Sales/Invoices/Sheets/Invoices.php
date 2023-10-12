@@ -11,7 +11,13 @@ class Invoices extends Export implements WithColumnFormatting
 {
     public function collection()
     {
-        return Model::with('category')->invoice()->collectForExport($this->ids, ['document_number' => 'desc']);
+        $model = Model::with('category')->invoice()->collectForExport($this->ids, ['document_number' => 'desc']);
+
+        if (empty($this->ids)) {
+            $this->ids = $model->pluck('id')->toArray();
+        }
+
+        return $model;
     }
 
     public function map($model): array
