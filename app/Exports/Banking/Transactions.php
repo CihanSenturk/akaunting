@@ -3,9 +3,14 @@
 namespace App\Exports\Banking;
 
 use App\Abstracts\Export;
+use App\Utilities\Modules;
+use App\Models\Banking\Account;
+use App\Models\Setting\Category;
+use App\Models\Setting\Currency;
 use App\Models\Banking\Transaction as Model;
-use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 
 class Transactions extends Export implements WithColumnFormatting
 {
@@ -28,7 +33,7 @@ class Transactions extends Export implements WithColumnFormatting
     public function fields(): array
     {
         return [
-            'type',
+            'type', 
             'number',
             'paid_at',
             'amount',
@@ -43,6 +48,42 @@ class Transactions extends Export implements WithColumnFormatting
             'reference',
             'reconciled',
             'parent_number',
+        ];
+    }
+
+    public function columnValidations(): array
+    {
+        return [
+            [
+                'columns_name' => 'A',
+                'options' => [
+                    Model::INCOME_TYPE, Model::INCOME_TRANSFER_TYPE, Model::INCOME_SPLIT_TYPE, Model::INCOME_RECURRING_TYPE,
+                    Model::EXPENSE_TYPE, Model::EXPENSE_TRANSFER_TYPE, Model::EXPENSE_SPLIT_TYPE, Model::EXPENSE_RECURRING_TYPE,
+                ]
+            ],
+            [
+                'columns_name' => 'C',
+                'type' => DataValidation::TYPE_NONE,
+                'prompt_title' => 'Format Date: yyyy-mm-dd',
+                'prompt' => 'Please enter the appropriate date format. Ex: 2023-10-29',
+                'hide_error_notification' => true,
+            ],
+            [
+                'columns_name' => 'E',
+                'options' => Currency::pluck('code')->toArray(),
+            ],
+            [
+                'columns_name' => 'G',
+                'options' => Account::pluck('name')->toArray(),
+            ],
+            [
+                'columns_name' => 'J',
+                'options' => Category::pluck('name')->toArray(),
+            ],
+            [
+                'columns_name' => 'L',
+                'options' => Modules::getPaymentMethods(),
+            ],
         ];
     }
 
