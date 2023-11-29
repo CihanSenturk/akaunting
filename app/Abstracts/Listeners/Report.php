@@ -303,7 +303,7 @@ abstract class Report
                     $start = $quarter->getStartDate()->format($this->getQuarterlyDateFormat($event->class->model->year));
                     $end = $quarter->getEndDate()->format($this->getQuarterlyDateFormat($event->class->model->year));
 
-                    $formatted_date = $start . '-' . $end;
+                    $formatted_date = $start . ' - ' . $end;
                 }
 
                 break;
