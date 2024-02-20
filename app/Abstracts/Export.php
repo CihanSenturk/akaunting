@@ -2,6 +2,7 @@
 
 namespace App\Abstracts;
 
+use App\Abstracts\Http\FormRequest;
 use App\Events\Export\HeadingsPreparing;
 use App\Events\Export\RowsPreparing;
 use App\Notifications\Common\ExportFailed;
@@ -9,6 +10,8 @@ use App\Utilities\Date;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -27,6 +30,10 @@ abstract class Export implements FromCollection, HasLocalePreference, ShouldAuto
     public $fields;
 
     public $user;
+
+    public $request_class = null;
+
+    public $required_values = [];
 
     public function __construct($ids = null)
     {
@@ -47,6 +54,12 @@ abstract class Export implements FromCollection, HasLocalePreference, ShouldAuto
 
     public function map($model): array
     {
+        $validator = $this->withValidator($model);
+
+        if ($validator instanceof ValidationException) {
+            return [];
+        }
+
         $map = [];
 
         $date_fields = ['paid_at', 'invoiced_at', 'billed_at', 'due_at', 'issued_at', 'transferred_at'];
@@ -98,5 +111,44 @@ abstract class Export implements FromCollection, HasLocalePreference, ShouldAuto
     public function failed(\Throwable $exception): void
     {
         $this->user->notify(new ExportFailed($exception->getMessage()));
+    }
+
+    public function withValidator($model)
+    {
+        $condition = class_exists($this->request_class)
+                    ? ! ($request = new $this->request_class) instanceof FormRequest
+                    : true;
+
+        if (! $condition) {
+            $rules = $this->prepareRules($request->rules());
+
+            try {
+                Validator::make($model->toArray(), $rules)->validate();
+            } catch (ValidationException $e) {
+                return $e;
+            }
+        }
+
+        if (is_array($this->required_values) && ! empty($this->required_values)) {
+            $rules = array_map(function ($value) {
+                return 'required';
+            }, array_flip($this->required_values));
+            
+            try {
+                Validator::make($model->toArray(), $rules)->validate();
+            } catch (ValidationException $e) {
+                return $e;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * You can override this method to add custom rules for each row.
+     */
+    public function prepareRules(array $rules): array
+    {
+        return $rules;
     }
 }
