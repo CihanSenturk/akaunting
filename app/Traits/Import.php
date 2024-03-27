@@ -101,7 +101,7 @@ trait Import
             'precision'     => isset($row['currency_precision']) ? $row['currency_precision'] : currency($row['currency_code'])->getPrecision(),
             'decimal_mark'  => isset($row['currency_decimal_mark']) ? $row['currency_decimal_mark'] : currency($row['currency_code'])->getDecimalMark(),
             'created_from'  => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'    => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'    => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new CurrencyRequest)->rules());
@@ -113,6 +113,10 @@ trait Import
 
     public function getCreatedById($row)
     {
+        if (empty($row['created_by'])) {
+            return $this->user?->id;
+        }
+
         $user = user_model_class()::where('email', $row['created_by'])->first();
 
         if (! empty($user)) {
@@ -153,7 +157,7 @@ trait Import
     {
         $id = isset($row['parent_id']) ? $row['parent_id'] : null;
 
-        if (empty($row['parent_number'])) {
+        if (empty($row['parent_number']) && empty($row['parent_name'])){
             return null;
         }
 
@@ -163,6 +167,10 @@ trait Import
 
         if (empty($id) && isset($row['number'])) {
             $id = Transaction::number($row['parent_number'])->pluck('id')->first();
+        }
+
+        if (empty($id) && isset($row['parent_name'])) {
+            $id = Category::type($row['type'])->withSubCategory()->where('name', $row['parent_name'])->pluck('id')->first();
         }
 
         return is_null($id) ? $id : (int) $id;
@@ -213,7 +221,7 @@ trait Import
             'opening_balance'   => !empty($row['opening_balance']) ? $row['opening_balance'] : 0,
             'enabled'           => 1,
             'created_from'      => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new AccountRequest)->rules());
@@ -240,7 +248,7 @@ trait Import
             'opening_balance'   => !empty($row['opening_balance']) ? $row['opening_balance'] : 0,
             'enabled'           => 1,
             'created_from'      => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new AccountRequest)->rules());
@@ -267,7 +275,7 @@ trait Import
             'opening_balance'   => !empty($row['opening_balance']) ? $row['opening_balance'] : 0,
             'enabled'           => 1,
             'created_from'      => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new AccountRequest)->rules());
@@ -292,7 +300,7 @@ trait Import
             'color'             => !empty($row['category_color']) ? $row['category_color'] : '#' . dechex(rand(0x000000, 0xFFFFFF)),
             'enabled'           => 1,
             'created_from'      => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new CategoryRequest)->rules());
@@ -318,7 +326,7 @@ trait Import
             'currency_code'     => !empty($row['contact_currency']) ? $row['contact_currency'] : default_currency(),
             'enabled'           => 1,
             'created_from'      => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new ContactRequest)->rules());
@@ -344,7 +352,7 @@ trait Import
             'currency_code'     => !empty($row['contact_currency']) ? $row['contact_currency'] : default_currency(),
             'enabled'           => 1,
             'created_from'      => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new ContactRequest)->rules());
@@ -373,7 +381,7 @@ trait Import
             'purchase_price'    => !empty($row['purchase_price']) ? $row['purchase_price'] : (!empty($row['price']) ? $row['price'] : 0),
             'enabled'           => 1,
             'created_from'      => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new ItemRequest())->rules());
@@ -398,7 +406,7 @@ trait Import
             'name'              => !empty($row['tax_name']) ? $row['tax_name'] : (string) $row['tax_rate'],
             'enabled'           => 1,
             'created_from'      => !empty($row['created_from']) ? $row['created_from'] : $this->getSourcePrefix() . 'import',
-            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()->id,
+            'created_by'        => !empty($row['created_by']) ? $row['created_by'] : user()?->id,
         ];
 
         Validator::validate($data, (new TaxRequest())->rules());

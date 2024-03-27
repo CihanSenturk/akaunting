@@ -11,8 +11,19 @@ class RecurringInvoices extends Import
 {
     public $request_class = Request::class;
 
+    public $model = Model::class;
+
+    public $columns = [
+        'type',
+        'document_number',
+    ];
+
     public function model(array $row)
     {
+        if (self::hasRow($row)) {
+            return;
+        }
+
         return new Model($row);
     }
 
@@ -48,5 +59,23 @@ class RecurringInvoices extends Import
         unset($rules['document_number'], $rules['issued_at'], $rules['type']);
 
         return $rules;
+    }
+
+    //This function is used in import classes. If the data in the row exists in the database, it is returned.
+    public function hasRow($row)
+    {
+        $has_row = $this->model::invoiceRecurring()->get($this->columns)->each(function ($data) {
+            $data->setAppends([]);
+            $data->unsetRelations();
+        });
+
+        $search_value = [];
+
+        //In the model, the fields to be searched for the row are determined.
+        foreach ($this->columns as $key) {
+            $search_value[$key] = isset($row[$key]) ? $row[$key] : null;
+        }
+
+        return in_array($search_value, $has_row->toArray());
     }
 }

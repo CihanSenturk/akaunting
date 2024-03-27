@@ -43,6 +43,7 @@ return [
     'get_paid'              => 'Être payé',
     'accept_payments'       => 'Accepter les paiements en ligne',
     'payments_received'     => 'Paiements reçus',
+    'over_payment'          => 'Le montant saisi dépasse le montant total: :amount',
 
     'form_description' => [
         'billing'           => 'Les détails de facturation apparaissent sur votre facture émise. La date de facturation est utilisée dans le tableau de bord et les rapports. Sélectionnez la date à laquelle vous souhaitez être payé comme Date d\'Échéance.',
@@ -67,13 +68,6 @@ return [
         ],
 
         'name_or_description_required' => 'Votre facture doit afficher au moins le <b>:name</b> ou la <b>:description</b>.',
-    ],
-
-    'slider' => [
-        'create'            => ':user a créé cette facture le :date',
-        'create_recurring'  => ':user a créé ce modèle récurrent le :date',
-        'schedule'          => 'Répéter chaque :interval :frequency depuis :date',
-        'children'          => ':count factures ont été créées automatiquement',
     ],
 
     'share' => [

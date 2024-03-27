@@ -3,6 +3,8 @@
 namespace App\Jobs\Setting;
 
 use App\Abstracts\Job;
+use App\Events\Setting\CurrencyUpdated;
+use App\Events\Setting\CurrencyUpdating;
 use App\Interfaces\Job\ShouldUpdate;
 use App\Models\Setting\Currency;
 
@@ -11,6 +13,8 @@ class UpdateCurrency extends Job implements ShouldUpdate
     public function handle(): Currency
     {
         $this->authorize();
+
+        event(new CurrencyUpdating($this->model, $this->request));
 
         // Force the rate to be 1 for default currency
         if ($this->request->get('default_currency')) {
@@ -26,6 +30,8 @@ class UpdateCurrency extends Job implements ShouldUpdate
                 setting()->save();
             }
         });
+
+        event(new CurrencyUpdated($this->model, $this->request));
 
         return $this->model;
     }
@@ -45,7 +51,7 @@ class UpdateCurrency extends Job implements ShouldUpdate
             throw new \Exception($message);
         }
 
-        if (! $this->request->get('enabled')) {
+        if ($this->request->has('enabled') && ! $this->request->get('enabled')) {
             $message = trans('messages.warning.disable_code', ['name' => $this->model->name, 'text' => implode(', ', $relationships)]);
 
             throw new \Exception($message);

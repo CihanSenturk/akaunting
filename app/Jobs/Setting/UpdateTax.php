@@ -3,6 +3,8 @@
 namespace App\Jobs\Setting;
 
 use App\Abstracts\Job;
+use App\Events\Setting\TaxUpdated;
+use App\Events\Setting\TaxUpdating;
 use App\Interfaces\Job\ShouldUpdate;
 use App\Models\Setting\Tax;
 
@@ -12,9 +14,13 @@ class UpdateTax extends Job implements ShouldUpdate
     {
         $this->authorize();
 
+        event(new TaxUpdating($this->model, $this->request));
+
         \DB::transaction(function () {
             $this->model->update($this->request->all());
         });
+
+        event(new TaxUpdated($this->model, $this->request));
 
         return $this->model;
     }
@@ -34,7 +40,7 @@ class UpdateTax extends Job implements ShouldUpdate
             throw new \Exception($message);
         }
 
-        if (! $this->request->get('enabled')) {
+        if ($this->request->has('enabled') && ! $this->request->get('enabled')) {
             $message = trans('messages.warning.disabled', ['name' => $this->model->name, 'text' => implode(', ', $relationships)]);
 
             throw new \Exception($message);

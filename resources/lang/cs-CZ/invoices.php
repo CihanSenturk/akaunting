@@ -43,6 +43,7 @@ return [
     'get_paid'              => 'Uhrazení faktury',
     'accept_payments'       => 'Přijímat online platby',
     'payments_received'     => 'Obdržené platby',
+    'over_payment'          => 'Částka, kterou jste zadali, překračuje celkovou částku: :amount',
 
     'form_description' => [
         'billing'           => 'Fakturační údaje jsou uvedeny ve vaší faktuře. Datum faktury se používá na nástěnce a reportech. Vyberte datum, které chcete zaplatit jako termín splatnosti.',
@@ -67,13 +68,6 @@ return [
         ],
 
         'name_or_description_required' => 'Vaše faktura musí obsahovat alespoň jeden z <b>:name</b> nebo <b>:description</b>.',
-    ],
-
-    'slider' => [
-        'create'            => ':user vytvořil tuto fakturu dne :date',
-        'create_recurring'  => ':user vytvořil tuto opakovanou šablonu dne :date',
-        'schedule'          => 'Opakovat každý :interval :frequency od :date',
-        'children'          => ':count faktur(y) bylo(y) vytvořeno(y) automaticky',
     ],
 
     'share' => [

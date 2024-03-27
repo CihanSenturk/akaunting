@@ -43,6 +43,7 @@ return [
     'get_paid'              => 'Cobrament',
     'accept_payments'       => 'Accepta pagaments online',
     'payments_received'     => 'S\'han rebut els pagaments',
+    'over_payment'          => 'La quantitat introduïda passa del total: :amount',
 
     'form_description' => [
         'billing'           => 'Les dades de facturació es mostren a la factura. La data de la factura s\'utilitza al tauler i als informes. Selecciona la data que vols com a data de venciment.',
@@ -67,13 +68,6 @@ return [
         ],
 
         'name_or_description_required' => 'La teva factura ha de mostrar com a mínim o <b>:name</b> o <b>:description</b>.',
-    ],
-
-    'slider' => [
-        'create'            => ':user ha creat aquesta factura el :date',
-        'create_recurring'  => ':user ha creat aquesta plantilla recurrent el :date',
-        'schedule'          => 'Repeteix cada :interval :frequency des de :date',
-        'children'          => 'S\'han creat :count factures automàticament',
     ],
 
     'share' => [

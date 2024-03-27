@@ -23,9 +23,9 @@ trait DateTime
 
         $chars = ['dash' => '-', 'slash' => '/', 'dot' => '.', 'comma' => ',', 'space' => ' '];
 
-        $date_format = (setting('localisation.date_format', $default)) ?? $default;
+        $date_format = setting('localisation.date_format', $default) ?? $default;
 
-        $char = (setting('localisation.date_separator', 'space')) ?? 'space';
+        $char = setting('localisation.date_separator', 'space') ?? 'space';
         $date_separator = $chars[$char];
 
         return str_replace(' ', $date_separator, $date_format);
@@ -46,8 +46,8 @@ trait DateTime
         } else {
             $financial_year = $this->getFinancialYear($year);
 
-            $start = $financial_year->copy()->getStartDate();
-            $end = $financial_year->copy()->getEndDate();
+            $start = $financial_year->copy()->getStartDate()->startOfDay();
+            $end = $financial_year->copy()->getEndDate()->endOfDay();
         }
 
         return [$start, $end];
@@ -152,7 +152,13 @@ trait DateTime
 
         $start = $this->getFinancialStart($year);
 
-        for ($i = 0; $i < 52; $i++) {
+        $w = 52;
+
+        if (request()->filled('start_date') && request()->filled('end_date')) {
+            $w = Date::parse(request('start_date'))->diffInWeeks(Date::parse(request('end_date'))) + 1;
+        }
+
+        for ($i = 0; $i < $w; $i++) {
             $weeks[] = CarbonPeriod::create($start->copy()->addWeeks($i), $start->copy()->addWeeks($i + 1)->subDay()->endOfDay());
         }
 
@@ -165,7 +171,13 @@ trait DateTime
 
         $start = $this->getFinancialStart($year);
 
-        for ($i = 0; $i < 12; $i++) {
+        $m = 12;
+
+        if (request()->filled('start_date') && request()->filled('end_date')) {
+            $m = Date::parse(request('start_date'))->diffInMonths(Date::parse(request('end_date'))) + 1;
+        }
+
+        for ($i = 0; $i < $m; $i++) {
             $months[] = CarbonPeriod::create($start->copy()->addMonths($i), $start->copy()->addMonths($i + 1)->subDay()->endOfDay());
         }
 
@@ -178,7 +190,13 @@ trait DateTime
 
         $start = $this->getFinancialStart($year);
 
-        for ($i = 0; $i < 4; $i++) {
+        $q = 4;
+
+        if (request()->filled('start_date') && request()->filled('end_date')) {
+            $q = Date::parse(request('start_date'))->diffInQuarters(Date::parse(request('end_date'))) + 1;
+        }
+
+        for ($i = 0; $i < $q; $i++) {
             $quarters[] = CarbonPeriod::create($start->copy()->addQuarters($i), $start->copy()->addQuarters($i + 1)->subDay()->endOfDay());
         }
 
@@ -258,6 +276,66 @@ trait DateTime
     public function getYearlyDateFormat(): string
     {
         return 'Y';
+    }
+
+    public function getPeriodicDate(Date $date, string $period, string $year): string
+    {
+        $formatted_date = '';
+
+        switch ($period) {
+            case 'yearly':
+                $financial_year = $this->getFinancialYear($year);
+
+                if ($date->greaterThanOrEqualTo($financial_year->getStartDate()) && $date->lessThanOrEqualTo($financial_year->getEndDate())) {
+                    if (setting('localisation.financial_denote') == 'begins') {
+                        $formatted_date = $financial_year->copy()->getStartDate()->format($this->getYearlyDateFormat());
+                    } else {
+                        $formatted_date = $financial_year->copy()->getEndDate()->format($this->getYearlyDateFormat());
+                    }
+                }
+
+                break;
+            case 'quarterly':
+                $quarters = $this->getFinancialQuarters($year);
+
+                foreach ($quarters as $quarter) {
+                    if ($date->lessThan($quarter->getStartDate()) || $date->greaterThan($quarter->getEndDate())) {
+                        continue;
+                    }
+
+                    $start = $quarter->copy()->getStartDate()->format($this->getQuarterlyDateFormat($year));
+                    $end = $quarter->copy()->getEndDate()->format($this->getQuarterlyDateFormat($year));
+
+                    $formatted_date = $start . ' - ' . $end;
+
+                    break;
+                }
+
+                break;
+            case 'weekly':
+                $weeks = $this->getFinancialWeeks($year);
+
+                foreach ($weeks as $week) {
+                    if ($date->lessThan($week->getStartDate()) || $date->greaterThan($week->getEndDate())) {
+                        continue;
+                    }
+
+                    $start = $week->copy()->getStartDate()->format($this->getDailyDateFormat($year));
+                    $end = $week->copy()->getEndDate()->format($this->getDailyDateFormat($year));
+
+                    $formatted_date = $start . ' - ' . $end;
+
+                    break;
+                }
+
+                break;
+            default:
+                $formatted_date = $date->copy()->format($this->getMonthlyDateFormat($year));
+
+                break;
+        }
+
+        return $formatted_date;
     }
 
     public function getTimezones(): array

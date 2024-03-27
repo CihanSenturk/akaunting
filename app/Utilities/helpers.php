@@ -1,12 +1,14 @@
 <?php
 
 use App\Models\Common\Company;
+use App\Traits\Cloud;
 use App\Traits\DateTime;
 use App\Traits\Sources;
 use App\Traits\Modules;
 use App\Traits\SearchString;
 use App\Utilities\Date;
 use App\Utilities\Widgets;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 if (! function_exists('user')) {
@@ -95,9 +97,7 @@ if (! function_exists('module_is_enabled')) {
      */
     function module_is_enabled(string $alias): bool
     {
-        $module = new class() {
-            use Modules;
-        };
+        $module = new class() { use Modules; };
 
         return $module->moduleIsEnabled($alias);
     }
@@ -129,9 +129,7 @@ if (! function_exists('source_name')) {
      */
     function source_name(string|null $alias = null): string
     {
-        $tmp = new class() {
-            use Sources;
-        };
+        $tmp = new class() { use Sources; };
 
         return $tmp->getSourceName(null, $alias);
     }
@@ -173,7 +171,34 @@ if (! function_exists('running_in_queue')) {
      */
     function running_in_queue(): bool
     {
-        return defined('APP_RUNNING_IN_QUEUE') ?? false;
+        return app()->runningConsoleCommand([
+            'queue:work',
+            'queue:listen',
+            'horizon',
+        ]);
+    }
+}
+
+if (! function_exists('running_in_schedule')) {
+    /**
+     * Detect if application is running in schedule.
+     */
+    function running_in_schedule(): bool
+    {
+        return app()->runningConsoleCommand([
+            'schedule:run',
+            'schedule:work',
+        ]);
+    }
+}
+
+if (! function_exists('running_in_test')) {
+    /**
+     * Detect if application is running in test.
+     */
+    function running_in_test(): bool
+    {
+        return env_is_testing() && app()->runningInConsole();
     }
 }
 
@@ -290,11 +315,63 @@ if (! function_exists('user_model_class')) {
     }
 }
 
+if (! function_exists('role_model_class')) {
+    function role_model_class(): string
+    {
+        return config('laratrust.models.role');
+    }
+}
+
 if (! function_exists('search_string_value')) {
     function search_string_value(string $name, string $default = '', string $input = ''): string|array
     {
         $search = new class() { use SearchString; };
 
         return $search->getSearchStringValue($name, $default, $input);
+    }
+}
+
+if (! function_exists('is_cloud')) {
+    function is_cloud(): bool
+    {
+        $cloud = new class() { use Cloud; };
+
+        return $cloud->isCloud();
+    }
+}
+
+if (! function_exists('request_is_api')) {
+    function request_is_api(Request|null $request = null): bool
+    {
+        $r = $request ?: request();
+
+        return $r->is(config('api.prefix') . '/*');
+    }
+}
+
+if (! function_exists('request_is_auth')) {
+    function request_is_auth(Request|null $request = null): bool
+    {
+        $r = $request ?: request();
+
+        return $r->is('auth/*');
+    }
+}
+
+if (! function_exists('request_is_signed')) {
+    function request_is_signed(Request|null $request = null, int $company_id): bool
+    {
+        $r = $request ?: request();
+
+        return $r->is($company_id . '/signed/*');
+    }
+}
+
+if (! function_exists('request_is_portal')) {
+    function request_is_portal(Request|null $request = null, int $company_id): bool
+    {
+        $r = $request ?: request();
+
+        return $r->is($company_id . '/portal') || $r->is($company_id . '/portal/*');
     }
 }

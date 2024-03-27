@@ -43,6 +43,7 @@ return [
     'get_paid'              => 'Betaling afstemmen',
     'accept_payments'       => 'Online betalingen accepteren',
     'payments_received'     => 'Ontvangen betalingen',
+    'over_payment'          => 'Het bedrag dat je hebt ingevoerd, komt voorbij het totaal:',
 
     'form_description' => [
         'billing'           => 'Factuurgegevens verschijnen op uw factuur. Factuurdatum wordt gebruikt in het dashboard en in rapporten. Selecteer de datum waarop u verwacht betaald te worden als vervaldatum.',
@@ -67,13 +68,6 @@ return [
         ],
 
         'name_or_description_required' => 'Je factuur moet ten minste één van de volgende punten bevatten <b>:name</b> of <b>:description</b>.',
-    ],
-
-    'slider' => [
-        'create'            => ':user heeft deze factuur aangemaakt op :datum',
-        'create_recurring'  => ':user heeft dit terugkerende sjabloon aangemaakt op :date',
-        'schedule'          => 'Herhaal elke :interval :frequency sinds :date',
-        'children'          => ':count facturen zijn automatisch aangemaakt',
     ],
 
     'share' => [

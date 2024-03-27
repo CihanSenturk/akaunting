@@ -2,10 +2,11 @@
 
 namespace App\Utilities;
 
+use Akaunting\Version\Version;
 use App\Models\Common\Company;
 use App\Models\Common\Contact;
 use App\Models\Document\Document;
-use App\Traits\Cloud;
+use App\Traits\Settings;
 use Composer\InstalledVersions;
 use Illuminate\Support\Facades\DB;
 
@@ -16,17 +17,19 @@ class Info
         static $info = [];
 
         $basic = [
-            'api_key' => setting('apps.api_key'),
+            'api_key' => static::getApiKey(),
             'ip' => static::ip(),
         ];
 
-        if (! empty($info) || request()->isCloudHost()) {
+        if (! empty($info) || is_cloud()) {
             return array_merge($info, $basic);
         }
 
+        $users_count = user_model_class()::query()->isNotCustomer()->count();
+
         $info = array_merge(static::versions(), $basic, [
             'companies' => Company::count(),
-            'users' => user_model_class()::count(),
+            'users' => $users_count,
             'invoices' => Document::allCompanies()->invoice()->count(),
             'customers' => Contact::allCompanies()->customer()->count(),
             'php_extensions' => static::phpExtensions(),
@@ -44,7 +47,7 @@ class Info
         }
 
         $versions = [
-            'akaunting' => version('short'),
+            'akaunting' => Version::short(),
             'laravel' => InstalledVersions::getPrettyVersion('laravel/framework'),
             'php' => static::phpVersion(),
             'mysql' => static::mysqlVersion(),
@@ -86,5 +89,12 @@ class Info
         return request()->header('CF_CONNECTING_IP')
                 ? request()->header('CF_CONNECTING_IP')
                 : request()->ip();
+    }
+
+    public static function getApiKey(): string
+    {
+        $setting = new class() { use Settings; };
+
+        return $setting->getSettingValue('apps.api_key', '');
     }
 }

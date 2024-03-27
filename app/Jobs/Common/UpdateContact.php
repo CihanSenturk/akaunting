@@ -3,10 +3,11 @@
 namespace App\Jobs\Common;
 
 use App\Abstracts\Job;
+use App\Events\Common\ContactUpdated;
+use App\Events\Common\ContactUpdating;
 use App\Interfaces\Job\ShouldUpdate;
 use App\Jobs\Auth\CreateUser;
 use App\Jobs\Common\CreateContactPersons;
-use App\Models\Auth\Role;
 use App\Models\Common\Contact;
 use Illuminate\Support\Str;
 
@@ -15,6 +16,8 @@ class UpdateContact extends Job implements ShouldUpdate
     public function handle(): Contact
     {
         $this->authorize();
+
+        event(new ContactUpdating($this->model, $this->request));
 
         \DB::transaction(function () {
             if ($this->request->get('create_user', 'false') === 'true') {
@@ -41,6 +44,8 @@ class UpdateContact extends Job implements ShouldUpdate
             $this->model->update($this->request->all());
         });
 
+        event(new ContactUpdated($this->model, $this->request));
+
         return $this->model;
     }
 
@@ -49,7 +54,7 @@ class UpdateContact extends Job implements ShouldUpdate
      */
     public function authorize(): void
     {
-        if (($this->request['enabled'] == 0) && ($relationships = $this->getRelationships())) {
+        if (($this->request->has('enabled') && ! $this->request->get('enabled')) && ($relationships = $this->getRelationships())) {
             $message = trans('messages.warning.disabled', ['name' => $this->model->name, 'text' => implode(', ', $relationships)]);
 
             throw new \Exception($message);
@@ -65,7 +70,7 @@ class UpdateContact extends Job implements ShouldUpdate
             throw new \Exception($message);
         }
 
-        $customer_role_id = Role::all()->filter(function ($role) {
+        $customer_role_id = role_model_class()::all()->filter(function ($role) {
             return $role->hasPermission('read-client-portal');
         })->pluck('id')->first();
 
