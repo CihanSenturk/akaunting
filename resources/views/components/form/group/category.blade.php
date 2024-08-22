@@ -1,4 +1,6 @@
-@if ((! $attributes->has('withoutRemote') && ! $attributes->has('without-remote')) && (! $attributes->has('withoutAddNew') && ! $attributes->has('without-add-new')))
+@if ($hideCategory)
+    <!-- Hide category -->
+@elseif ((! $attributes->has('withoutRemote') && ! $attributes->has('without-remote')) && (! $attributes->has('withoutAddNew') && ! $attributes->has('without-add-new')))
     <x-form.group.select
         remote
         remote_action="{{ $remoteAction }}"

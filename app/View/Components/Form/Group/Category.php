@@ -3,6 +3,7 @@
 namespace App\View\Components\Form\Group;
 
 use App\Abstracts\View\Components\Form;
+use App\Events\Setting\CategoryFieldHided;
 use App\Models\Setting\Category as Model;
 
 class Category extends Form
@@ -22,6 +23,8 @@ class Category extends Form
      */
     public function render()
     {
+        $this->hideCategory = event(new CategoryFieldHided($this->hideCategory))[0]->hideCategory;
+
         if (empty($this->name)) {
             $this->name = 'category_id';
         }
