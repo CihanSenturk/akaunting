@@ -55,6 +55,10 @@ trait DateTime
 
     public function getFinancialStart($year = null): Date
     {
+        if (request()->filled('start_date')) {
+            return $this->getCustomStartDate(request('start_date'));
+        }
+
         $start_of_year = Date::now()->startOfYear();
 
         $setting = explode('-', setting('localisation.financial_start'));
@@ -72,6 +76,17 @@ trait DateTime
         }
 
         return $financial_start;
+    }
+
+    public function getCustomStartDate($start_date): Date
+    {
+        $start_date = Date::parse($start_date);
+
+        return Date::create(
+            $start_date->year,
+            $start_date->month,
+            $start_date->day
+        );
     }
 
     public function getFinancialWeek($year = null): CarbonPeriod
