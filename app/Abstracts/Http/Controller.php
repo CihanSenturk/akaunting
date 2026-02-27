@@ -153,4 +153,61 @@ abstract class Controller extends BaseController
             }
         }
     }
+
+    public function setActiveTabForCategories(): void
+    {
+        // Added this method to set the active tab for categories
+        if (! request()->has('list_records') && ! request()->has('search')) {
+            $tab_pins = setting('favorites.tab.' . user()->id, []);
+            $tab_pins = ! empty($tab_pins) ? json_decode($tab_pins, true) : [];
+
+            if (! empty($tab_pins) && ! empty($tab_pins['categories'])) {
+                $tab = $tab_pins['categories'];
+
+                if (! empty($tab)) {
+                    request()->offsetSet('search', 'type:' . $tab);
+                    request()->offsetSet('programmatic', '1');
+                }
+            }
+        }
+
+        if (request()->get('list_records') == 'all') {
+            return;
+        }
+
+        $type = $this->getSearchStringValue('type');
+
+        // Type değeri aslında bir tab olabilir, kontrol et
+        if (!empty($type)) {
+            $types = $this->getTypesForCategoryTab($type);
+
+            if (!empty($types) && count($types) > 0) {
+                // Bu bir tab, o tab'a ait tüm type'ları set et
+                request()->offsetSet('search', 'type:' . implode(',', $types));
+                request()->offsetSet('programmatic', '1');
+                return;
+            }
+        }
+
+        if (empty($type)) {
+            request()->offsetSet('search', 'type:income');
+            request()->offsetSet('programmatic', '1');
+        }
+    }
+
+    protected function getTypesForCategoryTab(string $tab): array
+    {
+        $types = [];
+        $configs = config('type.category');
+
+        foreach ($configs as $type => $attr) {
+            $typeTab = $attr['tab'] ?? $type;
+
+            if ($typeTab === $tab) {
+                $types[] = $type;
+            }
+        }
+
+        return $types;
+    }
 }

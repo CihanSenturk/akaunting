@@ -11,6 +11,7 @@ return [
     'category' => [
         Category::INCOME_TYPE => [
             'alias'             => '',
+            'tab' => Category::INCOME_TYPE,
             'translation' => [
                 'prefix'        => 'general',
             ],
@@ -18,6 +19,7 @@ return [
 
         Category::EXPENSE_TYPE => [
             'alias'             => '',
+            'tab' => Category::EXPENSE_TYPE,
             'translation' => [
                 'prefix'        => 'general',
             ],
@@ -25,6 +27,7 @@ return [
 
         Category::ITEM_TYPE => [
             'alias'             => '',
+            'tab' => Category::ITEM_TYPE,
             'translation' => [
                 'prefix'        => 'general',
             ],
@@ -32,6 +35,7 @@ return [
 
         Category::OTHER_TYPE => [
             'alias'             => '',
+            'tab' => Category::OTHER_TYPE,
             'translation' => [
                 'prefix'        => 'general',
             ],
@@ -343,7 +347,7 @@ return [
                 'file'              => 'transactions',
             ],
         ],
- 
+
         Transaction::INCOME_TYPE => [
             'group'                 => 'banking',
             'route' => [

@@ -4,9 +4,12 @@ namespace App\View\Components\Form\Group;
 
 use App\Abstracts\View\Components\Form;
 use App\Models\Setting\Category as Model;
+use App\Traits\Modules;
 
 class Category extends Form
 {
+    use Modules;
+
     public $type = 'income';
 
     public $path;
@@ -14,6 +17,9 @@ class Category extends Form
     public $remoteAction;
 
     public $categories;
+
+    public $has_double_entry = false;
+
 
     /**
      * Get the view / contents that represent the component.
@@ -30,6 +36,8 @@ class Category extends Form
         $this->remoteAction = route('categories.index', ['search' => 'type:' . $this->type . ' enabled:1']);
 
         $this->categories = Model::type($this->type)->enabled()->orderBy('name')->take(setting('default.select_limit'))->get();
+
+        $this->has_double_entry = $this->moduleIsEnabled('double-entry');
 
         $model = $this->getParentData('model');
 

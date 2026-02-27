@@ -12,10 +12,11 @@ use App\Jobs\Setting\DeleteCategory;
 use App\Jobs\Setting\UpdateCategory;
 use App\Models\Setting\Category;
 use App\Traits\Categories as Helper;
+use App\Traits\Modules;
 
 class Categories extends Controller
 {
-    use Helper;
+    use Helper, Modules;
 
     /**
      * Display a listing of the resource.
@@ -24,6 +25,8 @@ class Categories extends Controller
      */
     public function index()
     {
+        $this->setActiveTabForCategories();
+
         $query = Category::with('sub_categories');
 
         if (request()->has('search')) {
@@ -32,9 +35,28 @@ class Categories extends Controller
 
         $types = $this->getCategoryTypes();
 
-        $categories = $query->type(array_keys($types))->collect();
+        // If list_records is 'all', don't filter by type
+        if (request()->get('list_records') != 'all') {
+            $query->type(array_keys($types));
+        }
 
-        return $this->response('settings.categories.index', compact('categories', 'types'));
+        if ($this->moduleIsEnabled('double-entry')) {
+            $query->whereNotNull('code');
+        }
+
+        $categories = $query->collect();
+
+        $tabs = $this->getCategoryTabs();
+
+        // Calculate active tab
+        $search_type = $this->getSearchStringValue('type');
+        $tab_active = ! empty($search_type) ? 'categories-' . $search_type : 'categories-income';
+
+        if (request()->get('list_records') == 'all') {
+            $tab_active = 'categories-all';
+        }
+
+        return $this->response('settings.categories.index', compact('categories', 'types', 'tabs', 'tab_active'));
     }
 
     /**

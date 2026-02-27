@@ -18,11 +18,15 @@
                     </x-slot>
 
                     <x-slot name="body">
+                        @if (!empty($show_code_field))
+                        <x-form.group.text name="code" label="{{ trans('general.code') }}" />
+                        @endif
+
                         <x-form.group.text name="name" label="{{ trans('general.name') }}" />
 
                         <x-form.group.color name="color" label="{{ trans('general.color') }}" />
 
-                        <x-form.group.select name="type" label="{{ trans_choice('general.types', 1) }}" :options="$types" :selected="config('general.types')" change="updateParentCategories" />
+                        <x-form.group.select name="type" label="{{ trans_choice('general.types', 1) }}" :options="$types" :selected="config('general.types')" change="updateParentCategories" group />
 
                         <x-form.group.select name="parent_id" label="{{ trans('general.parent') . ' ' . trans_choice('general.categories', 1) }}" :options="[]" not-required dynamicOptions="categoriesBasedTypes" sort-options="false" v-disabled="selected_type" />
 

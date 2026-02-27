@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Events\Setting\CategoryTabsCollecting;
+use App\Events\Setting\CategoryTypesCollecting;
 use App\Models\Setting\Category;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -25,7 +27,37 @@ trait Categories
             $types[$type] = $translate ? trans_choice($name, 1) : $name;
         }
 
+        event(new CategoryTypesCollecting($types));
+
         return $types;
+    }
+
+    public function getCategoryTabs(): array
+    {
+        $tabs = [];
+        $configs = config('type.category');
+
+        // Only get core categories (without alias)
+        foreach ($configs as $type => $attr) {
+            // Skip module categories
+            if (!empty($attr['alias'])) {
+                continue;
+            }
+
+            $plural_type = Str::plural($type);
+
+            $name = $attr['translation']['prefix'] . '.' . $plural_type;
+
+            $tabs[] = [
+                'key' => $type,
+                'name' => trans_choice($name, 1),
+                'tab' => $attr['tab'] ?? $type,
+            ];
+        }
+
+        event(new CategoryTabsCollecting($tabs));
+
+        return $tabs;
     }
 
     public function getCategoryWithoutChildren(int $id): mixed
@@ -61,5 +93,17 @@ trait Categories
         }
 
         return $ids;
+    }
+
+    /**
+     * Finds existing maximum code and increase it
+     *
+     * @return mixed
+     */
+    public function getNextCategoryCode()
+    {
+        return Category::isNotSubCategory()->get(['code'])->reject(function ($category) {
+            return !preg_match('/^[0-9]*$/', $category->code);
+        })->max('code') + 1;
     }
 }
