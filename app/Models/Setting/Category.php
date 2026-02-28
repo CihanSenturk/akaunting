@@ -458,7 +458,7 @@ class Category extends Model
      *
      * @return double
      */
-    public function getBalanceWithoutSubaccountsAttribute()
+    public function getBalanceWithoutSubcategoriesAttribute()
     {
         return $this->calculateBalance(false);
     }
@@ -470,9 +470,29 @@ class Category extends Model
      */
     public function getOpeningBalanceAttribute()
     {
-        $this->setOpeningBalanceDates();
+        $total_debit = $total_credit = 0;
 
-        return $this->calculateBalance(false);
+        if (!isset($this->start_date)) {
+            $this->start_date = $this->getFinancialStart();
+        }
+
+        if (!isset($this->basis)) {
+            $this->basis = 'accrual';
+        }
+
+        $this->ledgers()
+            ->{$this->basis}()
+            ->where('issued_at', '<', $this->start_date)
+            ->with(['ledgerable'])
+            ->each(function ($ledger) use (&$total_debit, &$total_credit) {
+                $ledger->castDebit();
+                $ledger->castCredit();
+
+                $total_debit += $ledger->debit;
+                $total_credit += $ledger->credit;
+            });
+
+        return $total_debit - $total_credit;
     }
 
     /**
@@ -500,9 +520,19 @@ class Category extends Model
      *
      * @return string
      */
-    public function getBalanceWithoutSubaccountsColorizedAttribute()
+    public function getBalanceWithoutSubcategoriesColorizedAttribute()
     {
         return $this->getBalanceColorized(false);
+    }
+
+    /**
+     * Get the balance formatted (alias for balance_colorized).
+     *
+     * @return string
+     */
+    public function getBalanceFormattedAttribute()
+    {
+        return $this->balance_colorized;
     }
 
     /**

@@ -12,10 +12,6 @@
                     </x-slot>
 
                     <x-slot name="body">
-                        @if (!empty($show_code_field))
-                        <x-form.group.text name="code" label="{{ trans('general.code') }}" />
-                        @endif
-
                         <x-form.group.text name="name" label="{{ trans('general.name') }}" />
 
                         <x-form.group.color name="color" label="{{ trans('general.color') }}" />
