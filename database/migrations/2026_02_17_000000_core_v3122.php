@@ -15,10 +15,7 @@ return new class extends Migration
     {
         Schema::table('categories', function (Blueprint $table) {
             $table->string('code')->nullable()->after('company_id');
-            $table->string('accountable_type')->nullable()->after('parent_id');
-            $table->unsignedBigInteger('accountable_id')->nullable()->after('accountable_type');
-
-            $table->index(['accountable_type', 'accountable_id']);
+            $table->text('description')->nullable()->after('color');
         });
     }
 
@@ -30,8 +27,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('categories', function (Blueprint $table) {
-            $table->dropIndex(['accountable_type', 'accountable_id']);
-            $table->dropColumn(['code', 'accountable_type', 'accountable_id']);
+            $table->dropColumn('code');
+            $table->dropColumn('description');
         });
     }
 };

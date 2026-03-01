@@ -34,7 +34,7 @@ class Category extends Model
      *
      * @var array
      */
-    protected $fillable = ['company_id', 'code', 'name', 'type', 'color', 'enabled', 'created_from', 'created_by', 'parent_id', 'accountable_type', 'accountable_id'];
+    protected $fillable = ['company_id', 'code', 'name', 'type', 'color', 'description', 'enabled', 'created_from', 'created_by', 'parent_id'];
 
     /**
      * Sortable columns.
