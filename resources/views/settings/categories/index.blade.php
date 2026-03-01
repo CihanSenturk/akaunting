@@ -50,7 +50,7 @@
                         @else
                             <x-tabs.nav-pin
                                 id="categories-{{ $tab['key'] ?? 'all' }}"
-                                href="{{ route('categories.index', ['search' => 'type:' . ($tab['key'] ?? 'all')]) }}"
+                                href="{{ route('categories.index', ['search' => 'tab:' . ($tab['key'] ?? 'all')]) }}"
                                 name="{{ $tab['name'] }}"
                                 type="categories"
                                 tab="{{ $tab['tab'] }}"
@@ -90,12 +90,20 @@
                                         <x-index.bulkaction.all />
                                     </x-table.th>
 
-                                    <x-table.th class="w-5/12">
+                                    <x-table.th class="w-1/12">
+                                        <x-sortablelink column="code" title="{{ trans('general.code') }}" />
+                                    </x-table.th>
+
+                                    <x-table.th class="w-4/12">
                                         <x-sortablelink column="name" title="{{ trans('general.name') }}" />
                                     </x-table.th>
 
-                                    <x-table.th class="w-5/12">
+                                    <x-table.th class="w-3/12">
                                         <x-sortablelink column="type" title="{{ trans_choice('general.types', 1) }}" />
+                                    </x-table.th>
+
+                                    <x-table.th class="w-2/12 ltr:text-right rtl:text-left">
+                                        {{ trans('general.balance') }}
                                     </x-table.th>
                                 </x-table.tr>
                             </x-table.thead>
@@ -111,7 +119,15 @@
                                             />
                                         </x-table.td>
 
-                                        <x-table.td class="w-5/12">
+                                        <x-table.td class="w-1/12">
+                                            @if(!empty($item->code))
+                                                {{ $item->code }}
+                                            @else
+                                                <x-empty-data />
+                                            @endif
+                                        </x-table.td>
+
+                                        <x-table.td class="w-4/12">
                                             <div class="flex items-center">
                                                 @if ($item->sub_categories->count())
                                                     <x-tooltip id="tooltip-category-{{ $item->id }}" placement="bottom" message="{{ trans('categories.collapse') }}">
@@ -144,9 +160,17 @@
                                             @endif
                                         </x-table.td>
 
-                                        <x-table.td class="w-5/12">
+                                        <x-table.td class="w-3/12">
                                             @if (! empty($types[$item->type]))
                                                 {{ $types[$item->type] }}
+                                            @else
+                                                <x-empty-data />
+                                            @endif
+                                        </x-table.td>
+
+                                        <x-table.td class="w-2/12 ltr:text-right rtl:text-left">
+                                            @if(isset($item->balance_formatted))
+                                                {!! $item->balance_formatted !!}
                                             @else
                                                 <x-empty-data />
                                             @endif
@@ -158,7 +182,7 @@
                                     </x-table.tr>
 
                                     @foreach($item->sub_categories as $sub_category)
-                                        @include('settings.categories.sub_category', ['parent_category' => $item, 'sub_category' => $sub_category, 'tree_level' => 1])
+                                        @include('double-entry::settings.categories.sub_category', ['parent_category' => $item, 'sub_category' => $sub_category, 'tree_level' => 1])
                                     @endforeach
                                 @endforeach
                             </x-table.tbody>

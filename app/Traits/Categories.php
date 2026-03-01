@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 trait Categories
 {
-    public function getCategoryTypes(bool $translate = true): array
+    public function getCategoryTypes(bool $translate = true, bool $group = false): array
     {
         $types = [];
         $configs = config('type.category');
@@ -24,10 +24,13 @@ trait Categories
                 $name = $attr['alias'] . '::' . $name;
             }
 
-            $types[$type] = $translate ? trans_choice($name, 1) : $name;
+            if ($group) {
+                $group_key = $attr['tab'] ?? $type;
+                $types[$group_key][$type] = $translate ? trans_choice($name, 1) : $name;
+            } else {
+                $types[$type] = $translate ? trans_choice($name, 1) : $name;
+            }
         }
-
-        event(new CategoryTypesCollecting($types));
 
         return $types;
     }

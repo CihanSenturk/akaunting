@@ -480,6 +480,8 @@ return [
     App\Models\Setting\Category::class => [
         'columns' => [
             'id',
+            'code' => ['searchable' => true],
+            'description' => ['searchable' => true],
             'name' => ['searchable' => true],
             'enabled' => ['boolean' => true],
             'type' => [

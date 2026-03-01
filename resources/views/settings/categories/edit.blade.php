@@ -14,6 +14,10 @@
                     <x-slot name="body">
                         <x-form.group.text name="name" label="{{ trans('general.name') }}" />
 
+                        @if ($has_code)
+                            <x-form.group.text name="code" label="{{ trans('general.code') }}" />
+                        @endif
+
                         <x-form.group.color name="color" label="{{ trans('general.color') }}" />
 
                         @if ($type_disabled)
@@ -28,6 +32,8 @@
                             <x-form.input.hidden name="parent_category_id" value="{{ $category->parent_id }}" />
                             <x-form.input.hidden name="categories" value="{{ json_encode($categories) }}" />
                         @endif
+
+                        <x-form.group.textarea name="description" label="{{ trans('general.description') }}" not-required />
                     </x-slot>
                 </x-form.section>
 

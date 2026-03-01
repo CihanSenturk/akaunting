@@ -35,7 +35,6 @@ class Categories extends Controller
 
         $types = $this->getCategoryTypes();
 
-        // If list_records is 'all', don't filter by type
         if (request()->get('list_records') != 'all') {
             $query->type(array_keys($types));
         }
@@ -48,13 +47,8 @@ class Categories extends Controller
 
         $tabs = $this->getCategoryTabs();
 
-        // Calculate active tab
-        $search_type = $this->getSearchStringValue('type');
-        $tab_active = ! empty($search_type) ? 'categories-' . $search_type : 'categories-income';
-
-        if (request()->get('list_records') == 'all') {
-            $tab_active = 'categories-all';
-        }
+        $tab = request()->get('list_records');
+        $tab_active = ! empty($tab) ? 'categories-' . $tab : 'categories-all';
 
         return $this->response('settings.categories.index', compact('categories', 'types', 'tabs', 'tab_active'));
     }
@@ -76,13 +70,15 @@ class Categories extends Controller
      */
     public function create()
     {
-        $types = $this->getCategoryTypes();
+        $types = $this->getCategoryTypes(true, true);
 
         $categories = [];
 
         foreach (config('type.category') as $type => $config) {
             $categories[$type] = [];
         }
+
+        $has_code = $this->moduleIsEnabled('double-entry');
 
         Category::enabled()->orderBy('name')->get()->each(function ($category) use (&$categories) {
             $categories[$category->type][] = [
@@ -92,7 +88,7 @@ class Categories extends Controller
             ];
         });
 
-        return view('settings.categories.create', compact('types', 'categories'));
+        return view('settings.categories.create', compact('types', 'categories', 'has_code'));
     }
 
     /**
@@ -156,7 +152,7 @@ class Categories extends Controller
      */
     public function edit(Category $category)
     {
-        $types = $this->getCategoryTypes();
+        $types = $this->getCategoryTypes(true, true);
 
         $type_disabled = (Category::where('type', $category->type)->count() == 1) ?: false;
 
@@ -197,7 +193,9 @@ class Categories extends Controller
 
         $parent_categories = $categories[$category->type] ?? [];
 
-        return view('settings.categories.edit', compact('category', 'types', 'type_disabled', 'categories', 'parent_categories'));
+        $has_code = $this->moduleIsEnabled('double-entry');
+
+        return view('settings.categories.edit', compact('category', 'types', 'type_disabled', 'categories', 'parent_categories', 'has_code'));
     }
 
     /**
