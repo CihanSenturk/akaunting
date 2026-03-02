@@ -39,21 +39,21 @@
         <x-index.container>
             <x-tabs active="{{ $tab_active }}">
                 <x-slot name="navs">
-                    @foreach($tabs as $tab)
-                        @if ($tab_active == 'categories-' . ($tab['key'] ?? 'all' ))
+                    @foreach($tabs as $tab => $data)
+                        @if ($tab_active == 'categories-' . ($tab ?? 'all' ))
                             <x-tabs.nav-pin
-                                id="categories-{{ $tab['key'] ?? 'all' }}"
-                                name="{{ $tab['name'] }}"
+                                id="categories-{{ $tab ?? 'all' }}"
+                                name="{{ $data['name'] }}"
                                 type="categories"
-                                tab="{{ $tab['tab'] }}"
+                                tab="{{ $tab }}"
                             />
                         @else
                             <x-tabs.nav-pin
-                                id="categories-{{ $tab['key'] ?? 'all' }}"
-                                href="{{ route('categories.index', ['search' => 'tab:' . ($tab['key'] ?? 'all')]) }}"
-                                name="{{ $tab['name'] }}"
+                                id="categories-{{ $tab ?? 'all' }}"
+                                href="{{ route('categories.index', ['search' => 'type:' . ($data['key'] ?? 'all')]) }}"
+                                name="{{ $data['name'] }}"
                                 type="categories"
-                                tab="{{ $tab['tab'] }}"
+                                tab="{{ $tab }}"
                             />
                         @endif
                     @endforeach
