@@ -175,10 +175,12 @@ abstract class Controller extends BaseController
             return;
         }
 
-        $tab = $this->getSearchStringValue('tab');
+        $types = $this->getSearchStringValue('type');
 
-        if (!empty($tab)) {
-            $types = $this->getTypesForCategoryTab($tab);
+        if (!empty($types)) {
+            $types = is_string($types) ? explode(',', $types) : $types;
+
+            $tab = config('type.category.' . $types[0] . '.group') ? config('type.category.' . $types[0] . '.group') : 'all';
 
             if (!empty($types) && count($types) > 0) {
                 request()->offsetSet('list_records', $tab);
@@ -193,21 +195,5 @@ abstract class Controller extends BaseController
             request()->offsetSet('list_records', 'all');
             request()->offsetSet('programmatic', '1');
         }
-    }
-
-    protected function getTypesForCategoryTab(string $tab): array
-    {
-        $types = [];
-        $configs = config('type.category');
-
-        foreach ($configs as $type => $attr) {
-            $typeTab = $attr['group'] ?? $type;
-
-            if ($typeTab === $tab) {
-                $types[] = $type;
-            }
-        }
-
-        return $types;
     }
 }
