@@ -85,7 +85,7 @@ trait Import
     {
         $id = isset($row['category_id']) ? $row['category_id'] : null;
 
-        $type = !empty($type) ? $type : (!empty($row['type']) ? $row['type'] : 'income');
+        $type = !empty($type) ? $type : (!empty($row['type']) ? $row['type'] : Category::INCOME_TYPE);
 
         if (empty($id) && !empty($row['category_name'])) {
             $id = $this->getCategoryIdFromName($row, $type);
@@ -96,7 +96,7 @@ trait Import
 
     public function getCategoryType($type)
     {
-        return array_key_exists($type, config('type.category')) ? $type : 'other';
+        return array_key_exists($type, config('type.category')) ? $type : Category::OTHER_TYPE;
     }
 
     public function getContactId($row, $type = null)

@@ -10,6 +10,96 @@ use Illuminate\Support\Str;
 
 trait Categories
 {
+    public function isIncomeCategory(): bool
+    {
+        $type = $this->type ?? $this->category->type ?? $this->model->type ?? Category::INCOME_TYPE;
+
+        return in_array($type, $this->getIncomeCategoryTypes());
+    }
+
+    public function isExpenseCategory(): bool
+    {
+        $type = $this->type ?? $this->category->type ?? $this->model->type ?? Category::EXPENSE_TYPE;
+
+        return in_array($type, $this->getExpenseCategoryTypes());
+    }
+
+    public function isItemCategory(): bool
+    {
+        $type = $this->type ?? $this->category->type ?? $this->model->type ?? Category::ITEM_TYPE;
+
+        return in_array($type, $this->getItemCategoryTypes());
+    }
+
+    public function isOtherCategory(): bool
+    {
+        $type = $this->type ?? $this->category->type ?? $this->model->type ?? Category::OTHER_TYPE;
+
+        return in_array($type, $this->getOtherCategoryTypes());
+    }
+
+    public function getIncomeCategoryTypes(string $return = 'array'): string|array
+    {
+        return $this->getCategoryTypesByIndex(Category::INCOME_TYPE, $return);
+    }
+
+    public function getExpenseCategoryTypes(string $return = 'array'): string|array
+    {
+        return $this->getCategoryTypesByIndex(Category::EXPENSE_TYPE, $return);
+    }
+
+    public function getItemCategoryTypes(string $return = 'array'): string|array
+    {
+        return $this->getCategoryTypesByIndex(Category::ITEM_TYPE, $return);
+    }
+
+    public function getOtherCategoryTypes(string $return = 'array'): string|array
+    {
+        return $this->getCategoryTypesByIndex(Category::OTHER_TYPE, $return);
+    }
+
+    public function getCategoryTypesByIndex(string $index, string $return = 'array'): string|array
+    {
+        $types = (string) setting('category.type.' . $index);
+
+        return ($return == 'array') ? explode(',', $types) : $types;
+    }
+
+    public function addIncomeCategoryType(string $new_type): void
+    {
+        $this->addCategoryType($new_type, Category::INCOME_TYPE);
+    }
+
+    public function addExpenseCategoryType(string $new_type): void
+    {
+        $this->addCategoryType($new_type, Category::EXPENSE_TYPE);
+    }
+
+    public function addItemCategoryType(string $new_type): void
+    {
+        $this->addCategoryType($new_type, Category::ITEM_TYPE);
+    }
+
+    public function addOtherCategoryType(string $new_type): void
+    {
+        $this->addCategoryType($new_type, Category::OTHER_TYPE);
+    }
+
+    public function addCategoryType(string $new_type, string $index): void
+    {
+        $types = explode(',', setting('category.type.' . $index));
+
+        if (in_array($new_type, $types)) {
+            return;
+        }
+
+        $types[] = $new_type;
+
+        setting([
+            'category.type.' . $index => implode(',', $types),
+        ])->save();
+    }
+
     public function getCategoryTypes(bool $translate = true, bool $group = false): array
     {
         $types = [];
@@ -71,7 +161,7 @@ trait Categories
     public function getTransferCategoryId(): mixed
     {
         // 1 hour set cache for same query
-        return Cache::remember('transferCategoryId', 60, function () {
+        return Cache::remember('transferCategoryId.' . company_id(), 60, function () {
             return Category::other()->pluck('id')->first();
         });
     }

@@ -4,13 +4,14 @@ namespace App\View\Components\Form\Group;
 
 use App\Abstracts\View\Components\Form;
 use App\Models\Setting\Category as Model;
+use App\Traits\Categories;
 use App\Traits\Modules;
 
 class Category extends Form
 {
-    use Modules;
+    use Categories, Modules;
 
-    public $type = 'income';
+    public $type = Model::INCOME_TYPE;
 
     public $path;
 
@@ -20,6 +21,8 @@ class Category extends Form
 
     public $has_double_entry = false;
 
+    /** @var bool */
+    public $group;
 
     /**
      * Get the view / contents that represent the component.
@@ -32,12 +35,39 @@ class Category extends Form
             $this->name = 'category_id';
         }
 
+        $this->group = true;
+
         $this->path = route('modals.categories.create', ['type' => $this->type]);
         $this->remoteAction = route('categories.index', ['search' => 'type:' . $this->type . ' enabled:1']);
 
-        $this->categories = Model::type($this->type)->enabled()->orderBy('name')->take(setting('default.select_limit'))->get();
+        $de_categories = [];
 
-        $this->has_double_entry = $this->moduleIsEnabled('double-entry');
+        $typeGroups = collect(config('type.category', []))
+            ->keys()
+            ->mapWithKeys(fn($type) => [
+                $type => trans_choice('double-entry::category_types.' . \Illuminate\Support\Str::plural($type), 1)
+            ]);
+
+        $types = $this->getIncomeCategoryTypes();
+
+        Model::whereNotNull('code')
+            ->enabled()
+            ->type($typeGroups->keys()->toArray())
+            ->orderBy('code')
+            ->get()
+            ->each(function ($category) use (&$de_categories, $typeGroups) {
+                $group = $typeGroups[$category->type] ?? trans_choice('general.others', 1);
+
+                $category->title = ($category->code ? $category->code . ' - ' : '') . $category->name;
+
+                $de_categories[$group][$category->id] = $category;
+            });
+
+        ksort($de_categories);
+
+        $this->categories = $de_categories;
+
+        //$this->has_double_entry = $this->moduleIsEnabled('double-entry');
 
         $model = $this->getParentData('model');
 

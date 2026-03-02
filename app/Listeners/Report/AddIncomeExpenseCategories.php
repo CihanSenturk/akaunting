@@ -28,7 +28,7 @@ class AddIncomeExpenseCategories extends Listener
         }
 
         $event->class->filters['categories'] = $this->getIncomeExpenseCategories(true);
-        $event->class->filters['routes']['categories'] = ['categories.index', 'search=type:income,expense enabled:1'];
+        $event->class->filters['routes']['categories'] = ['categories.index', 'search=type:' . implode(',', array_merge($this->getIncomeCategoryTypes(), $this->getExpenseCategoryTypes())) . ' enabled:1'];
         $event->class->filters['multiple']['categories'] = true;
     }
 
@@ -69,7 +69,7 @@ class AddIncomeExpenseCategories extends Listener
             return;
         }
 
-        $categories = Category::type(['income', 'expense'])->orderBy('name')->get();
+        $categories = Category::type(array_merge($this->getIncomeCategoryTypes(), $this->getExpenseCategoryTypes()))->orderBy('name')->get();
         $rows = $categories->pluck('name', 'id')->toArray();
 
         $this->setRowNamesAndValuesForCategories($event, $rows, $categories);

@@ -6,11 +6,14 @@ use App\Abstracts\Http\Controller;
 use App\Models\Banking\Account;
 use App\Models\Setting\Category;
 use App\Models\Setting\Setting;
+use App\Traits\Categories;
 use App\Utilities\Modules as Utility;
 use App\Http\Requests\Setting\Module as Request;
 
 class Modules extends Controller
 {
+    use Categories;
+
     /**
      * Instantiate a new controller instance.
      */

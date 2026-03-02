@@ -173,46 +173,50 @@ class Category extends Model
 
     /**
      * Scope to include only income.
+     * Uses Categories trait to support multiple income types (e.g. from modules).
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeIncome($query)
     {
-        return $query->where($this->qualifyColumn('type'), '=', 'income');
+        return $query->whereIn($this->qualifyColumn('type'), $this->getIncomeCategoryTypes());
     }
 
     /**
      * Scope to include only expense.
+     * Uses Categories trait to support multiple expense types (e.g. from modules).
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeExpense($query)
     {
-        return $query->where($this->qualifyColumn('type'), '=', 'expense');
+        return $query->whereIn($this->qualifyColumn('type'), $this->getExpenseCategoryTypes());
     }
 
     /**
      * Scope to include only item.
+     * Uses Categories trait to support multiple item types (e.g. from modules).
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeItem($query)
     {
-        return $query->where($this->qualifyColumn('type'), '=', 'item');
+        return $query->whereIn($this->qualifyColumn('type'), $this->getItemCategoryTypes());
     }
 
     /**
      * Scope to include only other.
+     * Uses Categories trait to support multiple other types (e.g. from modules).
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
     public function scopeOther($query)
     {
-        return $query->where($this->qualifyColumn('type'), '=', 'other');
+        return $query->whereIn($this->qualifyColumn('type'), $this->getOtherCategoryTypes());
     }
 
     public function scopeName($query, $name)

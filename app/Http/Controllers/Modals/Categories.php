@@ -29,7 +29,7 @@ class Categories extends Controller
      */
     public function create(IRequest $request)
     {
-        $type = $request->get('type', 'item');
+        $type = $request->get('type', Category::ITEM_TYPE);
 
         $categories = collect();
 
@@ -61,7 +61,7 @@ class Categories extends Controller
     public function store(Request $request)
     {
         $request['enabled'] = 1;
-        $request['type'] = $request->get('type', 'income');
+        $request['type'] = $request->get('type', Category::INCOME_TYPE);
         $request['color'] = $request->get('color', '#' . dechex(rand(0x000000, 0xFFFFFF)));
 
         $response = $this->ajaxDispatch(new CreateCategory($request));
