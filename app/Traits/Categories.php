@@ -131,14 +131,14 @@ trait Categories
         $configs = config('type.category');
 
         foreach ($configs as $type => $attr) {
-            $tab = $attr['group'] ?? $type;
+            $tab_key = 'categories-' . ($attr['group'] ?? $type);
 
-            if (isset($tabs[$tab])) {
-                $tabs[$tab]['key'] .= ',' . $type;
+            if (isset($tabs[$tab_key])) {
+                $tabs[$tab_key]['key'] .= ',' . $type;
                 continue;
             }
 
-            $plural_type = Str::plural($tab);
+            $plural_type = Str::plural($attr['group'] ?? $type);
 
             $name = $attr['translation']['prefix'] . '.' . $plural_type;
 
@@ -146,9 +146,10 @@ trait Categories
                 $name = $attr['alias'] . '::' . $name;
             }
 
-            $tabs[$tab] = [
+            $tabs[$tab_key] = [
                 'key' => $type,
                 'name' => trans_choice($name, 2),
+                'show_code' => $attr['show_code'] ?? false,
             ];
 
         }

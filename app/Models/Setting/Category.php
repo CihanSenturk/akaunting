@@ -11,14 +11,14 @@ use App\Scopes\Category as Scope;
 use App\Traits\Categories;
 use App\Traits\Tailwind;
 use App\Traits\Transactions;
-use Modules\DoubleEntry\Traits\Accounts;
+use Modules\DoubleEntry\Traits\Categories as DoubleEntryCategories;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 
 class Category extends Model
 {
-    use Accounts, Categories, HasFactory, Tailwind, Transactions;
+    use DoubleEntryCategories, Categories, HasFactory, Tailwind, Transactions;
 
     public const INCOME_TYPE = 'income';
     public const EXPENSE_TYPE = 'expense';
@@ -101,11 +101,6 @@ class Category extends Model
     public function sub_categories()
     {
         return $this->hasMany(Category::class, 'parent_id')->withSubCategory()->with('categories')->orderBy('name');
-    }
-
-    public function accountable()
-    {
-        return $this->morphTo();
     }
 
     public function documents()
@@ -373,15 +368,15 @@ class Category extends Model
         return is_array(trans($this->name)) ? $this->name : trans($this->name);
     }
 
-    /**
-     * Get sub categories (recursively) - alias for sub_categories for compatibility with Accounts trait
-     *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function sub_accounts()
-    {
-        return $this->sub_categories();
-    }
+    // /**
+    //  * Get sub categories (recursively) - alias for sub_categories for compatibility with Accounts trait
+    //  *
+    //  * @return \Illuminate\Database\Eloquent\Relations\HasMany
+    //  */
+    // public function sub_accounts()
+    // {
+    //     return $this->sub_categories();
+    // }
 
     /**
      * Get the debit total of a category.

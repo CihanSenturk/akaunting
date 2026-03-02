@@ -40,17 +40,17 @@
             <x-tabs active="{{ $tab_active }}">
                 <x-slot name="navs">
                     @foreach($tabs as $tab => $data)
-                        @if ($tab_active == 'categories-' . ($tab ?? 'all' ))
+                        @if ($tab_active == $tab)
                             <x-tabs.nav-pin
-                                id="categories-{{ $tab ?? 'all' }}"
+                                id="{{ $tab }}"
                                 name="{{ $data['name'] }}"
                                 type="categories"
                                 tab="{{ $tab }}"
                             />
                         @else
                             <x-tabs.nav-pin
-                                id="categories-{{ $tab ?? 'all' }}"
-                                href="{{ route('categories.index', ['search' => 'type:' . ($data['key'] ?? 'all')]) }}"
+                                id="{{ $tab }}"
+                                href="{{ route('categories.index', ['search' => 'type:' . $data['key']]) }}"
                                 name="{{ $data['name'] }}"
                                 type="categories"
                                 tab="{{ $tab }}"
@@ -90,11 +90,17 @@
                                         <x-index.bulkaction.all />
                                     </x-table.th>
 
-                                    <x-table.th class="w-1/12">
-                                        <x-sortablelink column="code" title="{{ trans('general.code') }}" />
-                                    </x-table.th>
+                                    @php
+                                        $name_class = ($tabs[$tab_active]['show_code'] ?? false) ? 'w-4/12' : 'w-5/12';
+                                    @endphp
 
-                                    <x-table.th class="w-4/12">
+                                    @if ($tabs[$tab_active]['show_code'] ?? false)
+                                        <x-table.th class="w-1/12">
+                                            <x-sortablelink column="code" title="{{ trans('general.code') }}" />
+                                        </x-table.th>
+                                    @endif
+
+                                    <x-table.th class="{{ $name_class }}">
                                         <x-sortablelink column="name" title="{{ trans('general.name') }}" />
                                     </x-table.th>
 
@@ -119,15 +125,17 @@
                                             />
                                         </x-table.td>
 
-                                        <x-table.td class="w-1/12">
-                                            @if(!empty($item->code))
-                                                {{ $item->code }}
-                                            @else
-                                                <x-empty-data />
-                                            @endif
-                                        </x-table.td>
+                                        @if ($tabs[$tab_active]['show_code'] ?? false)
+                                            <x-table.td class="w-1/12">
+                                                @if(!empty($item->code))
+                                                    {{ $item->code }}
+                                                @else
+                                                    <x-empty-data />
+                                                @endif
+                                            </x-table.td>
+                                        @endif
 
-                                        <x-table.td class="w-4/12">
+                                        <x-table.td class="{{ $name_class }}">
                                             <div class="flex items-center">
                                                 @if ($item->sub_categories->count())
                                                     <x-tooltip id="tooltip-category-{{ $item->id }}" placement="bottom" message="{{ trans('categories.collapse') }}">

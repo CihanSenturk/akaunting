@@ -4,7 +4,17 @@
             <x-index.bulkaction.single id="{{ $sub_category->id }}" name="{{ $sub_category->name }}" />
         </x-table.td>
 
-        <x-table.td class="relative w-6/12 py-4 ltr:text-left rtl:text-right whitespace-nowrap text-sm font-medium text-black truncate" style="padding-left: {{ $tree_level * 30 }}px;">
+        @if ($tabs[$tab_active]['show_code'] ?? false)
+            <x-table.td class="w-1/12 py-4 ltr:text-left rtl:text-right whitespace-nowrap text-sm font-medium text-black truncate">
+                @if(!empty($sub_category->code))
+                    {{ $sub_category->code }}
+                @else
+                    <x-empty-data />
+                @endif
+            </x-table.td>
+        @endif
+
+        <x-table.td class="relative {{ $name_class }} py-4 ltr:text-left rtl:text-right whitespace-nowrap text-sm font-medium text-black truncate" style="padding-left: {{ $tree_level * 30 }}px;">
             <div class="flex items-center ml-2">
                 @if ($sub_category->sub_categories->count())
                     <x-tooltip id="tooltip-category-{{ $parent_category->id }}" placement="bottom" message="{{ trans('categories.collapse') }}">
@@ -36,9 +46,17 @@
             @endif
         </x-table.td>
 
-        <x-table.td class="w-6/12 py-4 ltr:text-left rtl:text-right whitespace-nowrap text-sm font-normal text-black cursor-pointer truncate">
+        <x-table.td class="w-3/12 py-4 ltr:text-left rtl:text-right whitespace-nowrap text-sm font-normal text-black cursor-pointer truncate">
             @if (! empty($types[$item->type]))
                 {{ $types[$item->type] }}
+            @else
+                <x-empty-data />
+            @endif
+        </x-table.td>
+
+        <x-table.td class="w-2/12 py-4 ltr:text-right rtl:text-left whitespace-nowrap text-sm font-normal text-black cursor-pointer truncate">
+            @if(isset($sub_category->balance_formatted))
+                {!! $sub_category->balance_formatted !!}
             @else
                 <x-empty-data />
             @endif
