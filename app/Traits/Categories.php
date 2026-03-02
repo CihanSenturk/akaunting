@@ -106,19 +106,26 @@ trait Categories
         $configs = config('type.category');
 
         foreach ($configs as $type => $attr) {
-            $plural_type = Str::plural($type);
+            $name = null;
 
-            $name = $attr['translation']['prefix'] . '.' . $plural_type;
+            if (isset($attr['translation']['type_title'])) {
+                $name = $attr['translation']['type_title'];
+            } else {
+                $plural_type = Str::plural($type);
+                $name = $attr['translation']['prefix'] . '.' . $plural_type;
 
-            if (!empty($attr['alias'])) {
-                $name = $attr['alias'] . '::' . $name;
+                if (!empty($attr['alias'])) {
+                    $name = $attr['alias'] . '::' . $name;
+                }
+
+                $name = $translate ? trans_choice($name, 1) : $name;
             }
 
             if ($group) {
-                $group_key = $attr['tab'] ?? $type;
-                $types[$group_key][$type] = $translate ? trans_choice($name, 1) : $name;
+                $group_key = $attr['group'] ?? $type;
+                $types[$group_key][$type] = $name;
             } else {
-                $types[$type] = $translate ? trans_choice($name, 1) : $name;
+                $types[$type] = $name;
             }
         }
 
@@ -128,24 +135,39 @@ trait Categories
     public function getCategoryTabs(): array
     {
         $tabs = [];
+        $added_tabs = [];
         $configs = config('type.category');
 
-        // Only get core categories (without alias)
         foreach ($configs as $type => $attr) {
-            // Skip module categories
-            if (!empty($attr['alias'])) {
+            $tab = $attr['group'] ?? $type;
+
+            if (in_array($tab, $added_tabs)) {
                 continue;
             }
 
-            $plural_type = Str::plural($type);
+            $name = null;
 
-            $name = $attr['translation']['prefix'] . '.' . $plural_type;
+            if (isset($attr['translation']['group_title'])) {
+                $name = $attr['translation']['group_title'];
+            } else {
+                $plural_type = Str::plural($tab);
+
+                $trans = $attr['translation']['prefix'] . '.' . $plural_type;
+
+                if (!empty($attr['alias'])) {
+                    $trans = $attr['alias'] . '::' . $name;
+                }
+
+                $name = trans_choice($trans, 1);
+            }
 
             $tabs[] = [
-                'key' => $type,
-                'name' => trans_choice($name, 1),
-                'tab' => $attr['tab'] ?? $type,
+                'key' => $tab,
+                'name' => $name,
+                'tab' => $tab,
             ];
+
+            $added_tabs[] = $tab;
         }
 
         event(new CategoryTabsCollecting($tabs));

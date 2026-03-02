@@ -201,7 +201,7 @@ abstract class Controller extends BaseController
         $configs = config('type.category');
 
         foreach ($configs as $type => $attr) {
-            $typeTab = $attr['tab'] ?? $type;
+            $typeTab = $attr['group'] ?? $type;
 
             if ($typeTab === $tab) {
                 $types[] = $type;

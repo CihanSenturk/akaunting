@@ -39,10 +39,6 @@ class Categories extends Controller
             $query->type(array_keys($types));
         }
 
-        if ($this->moduleIsEnabled('double-entry')) {
-            $query->whereNotNull('code');
-        }
-
         $categories = $query->collect();
 
         $tabs = $this->getCategoryTabs();
