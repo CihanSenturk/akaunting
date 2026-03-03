@@ -177,11 +177,7 @@
                                         </x-table.td>
 
                                         <x-table.td class="w-2/12 ltr:text-right rtl:text-left">
-                                            @if(isset($item->balance_formatted))
-                                                {!! $item->balance_formatted !!}
-                                            @else
-                                                <x-empty-data />
-                                            @endif
+                                            <x-index.balance :amount="$item->balance" />
                                         </x-table.td>
 
                                         <x-table.td kind="action">
