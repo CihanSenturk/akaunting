@@ -19,8 +19,6 @@ class Category extends Form
 
     public $categories;
 
-    public $has_double_entry = false;
-
     /** @var bool */
     public $group;
 
@@ -37,8 +35,6 @@ class Category extends Form
 
         $this->path = route('modals.categories.create', ['type' => $this->type]);
         $this->remoteAction = route('categories.index', ['search' => 'type:' . $this->type . ' enabled:1']);
-
-        //$this->group = true;
 
         switch ($this->type) {
             case Model::INCOME_TYPE:
@@ -71,6 +67,8 @@ class Category extends Form
                 break;
             }
         }
+
+        $this->group = $this->group ?? $is_code;
 
         $order_by = $is_code ? 'code' : 'name';
 
