@@ -41,7 +41,7 @@ class Category extends Model
      *
      * @var array
      */
-    public $sortable = ['name', 'type', 'enabled'];
+    public $sortable = ['code', 'name', 'type', 'enabled'];
 
     /**
      * The "booted" method of the model.
