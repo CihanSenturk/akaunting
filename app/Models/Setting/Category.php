@@ -4,21 +4,22 @@ namespace App\Models\Setting;
 
 use App\Abstracts\Model;
 use App\Builders\Category as Builder;
+use App\Models\Banking\Transaction;
 use App\Models\Document\Document;
 use App\Interfaces\Export\WithParentSheet;
 use App\Relations\HasMany\Category as HasMany;
 use App\Scopes\Category as Scope;
 use App\Traits\Categories;
+use App\Traits\DateTime;
 use App\Traits\Tailwind;
 use App\Traits\Transactions;
-use Modules\DoubleEntry\Traits\Categories as DoubleEntryCategories;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 
 class Category extends Model
 {
-    use DoubleEntryCategories, Categories, HasFactory, Tailwind, Transactions;
+    use Categories, HasFactory, Tailwind, Transactions, DateTime;
 
     public const INCOME_TYPE = 'income';
     public const EXPENSE_TYPE = 'expense';
@@ -27,7 +28,7 @@ class Category extends Model
 
     protected $table = 'categories';
 
-    protected $appends = ['display_name', 'color_hex_code', 'trans_name'];
+    protected $appends = ['display_name', 'color_hex_code'];
 
     /**
      * Attributes that should be mass-assignable.
@@ -352,20 +353,6 @@ class Category extends Model
         $this->code = $this->getNextCategoryCode();
     }
 
-    public function ledgers()
-    {
-        $ledgers = $this->hasMany('Modules\DoubleEntry\Models\Ledger');
-
-        if (request()->has('start_date')) {
-            $start_date = request('start_date') . ' 00:00:00';
-            $end_date = request('end_date') . ' 23:59:59';
-
-            $ledgers->whereBetween('issued_at', [$start_date, $end_date]);
-        }
-
-        return $ledgers;
-    }
-
     /**
      * Get the translated name attribute.
      *
@@ -376,80 +363,6 @@ class Category extends Model
         return is_array(trans($this->name)) ? $this->name : trans($this->name);
     }
 
-    // /**
-    //  * Get sub categories (recursively) - alias for sub_categories for compatibility with Accounts trait
-    //  *
-    //  * @return \Illuminate\Database\Eloquent\Relations\HasMany
-    //  */
-    // public function sub_accounts()
-    // {
-    //     return $this->sub_categories();
-    // }
-
-    /**
-     * Get the debit total of a category.
-     *
-     * @return double
-     */
-    public function getDebitTotalAttribute()
-    {
-        $total = 0;
-
-        if (!isset($this->start_date) || !isset($this->end_date)) {
-            $financial_year = $this->getFinancialYear();
-
-            $this->start_date = $financial_year->getStartDate();
-            $this->end_date = $financial_year->getEndDate();
-        }
-
-        if (!isset($this->basis)) {
-            $this->basis = 'accrual';
-        }
-
-        $this->ledgers()
-            ->{$this->basis}()
-            ->whereBetween('issued_at', [$this->start_date, $this->end_date])
-            ->with(['ledgerable'])
-            ->each(function ($ledger) use (&$total) {
-                $ledger->castDebit();
-                $total += $ledger->debit;
-            });
-
-        return $total;
-    }
-
-    /**
-     * Get the credit total of a category.
-     *
-     * @return double
-     */
-    public function getCreditTotalAttribute()
-    {
-        $total = 0;
-
-        if (!isset($this->start_date) || !isset($this->end_date)) {
-            $financial_year = $this->getFinancialYear();
-
-            $this->start_date = $financial_year->getStartDate();
-            $this->end_date = $financial_year->getEndDate();
-        }
-
-        if (!isset($this->basis)) {
-            $this->basis = 'accrual';
-        }
-
-        $this->ledgers()
-            ->{$this->basis}()
-            ->whereBetween('issued_at', [$this->start_date, $this->end_date])
-            ->with(['ledgerable'])
-            ->each(function ($ledger) use (&$total) {
-                $ledger->castCredit();
-                $total += $ledger->credit;
-            });
-
-        return $total;
-    }
-
     /**
      * Get the balance of a category.
      *
@@ -457,7 +370,37 @@ class Category extends Model
      */
     public function getBalanceAttribute()
     {
-        return $this->calculateBalance();
+        // If view composer has set the balance, return it directly
+        if (isset($this->de_balance)) {
+            return $this->de_balance;
+        }
+
+        $financial_year = $this->getFinancialYear();
+
+        $start_date = $financial_year->getStartDate();
+        $end_date = $financial_year->getEndDate();
+
+        $this->transactions->whereBetween('paid_at', [$start_date, $end_date])
+            ->each(function ($transaction) use (&$incomes, &$expenses) {
+                if (($transaction->isNotIncome() && $transaction->isNotExpense()) || $transaction->isTransferTransaction()) {
+                    return;
+                }
+
+                if ($transaction->isIncome()) {
+                    $incomes += $transaction->getAmountConvertedToDefault();
+                } else {
+                    $expenses += $transaction->getAmountConvertedToDefault();
+                }
+            });
+
+        $balance = $incomes - $expenses;
+
+        $this->sub_categories()
+            ->each(function ($sub_category) use (&$balance) {
+                $balance += $sub_category->balance;
+            });
+
+        return $balance;
     }
 
     /**
@@ -467,80 +410,46 @@ class Category extends Model
      */
     public function getBalanceWithoutSubcategoriesAttribute()
     {
-        return $this->calculateBalance(false);
-    }
-
-    /**
-     * Get the opening balance of a category.
-     *
-     * @return double
-     */
-    public function getOpeningBalanceAttribute()
-    {
-        $total_debit = $total_credit = 0;
-
-        if (!isset($this->start_date)) {
-            $this->start_date = $this->getFinancialStart();
+        // If view composer has set the balance, return it directly
+        if (isset($this->without_subcategory_de_balance)) {
+            return $this->without_subcategory_de_balance;
         }
 
-        if (!isset($this->basis)) {
-            $this->basis = 'accrual';
-        }
+        $financial_year = $this->getFinancialYear();
 
-        $this->ledgers()
-            ->{$this->basis}()
-            ->where('issued_at', '<', $this->start_date)
-            ->with(['ledgerable'])
-            ->each(function ($ledger) use (&$total_debit, &$total_credit) {
-                $ledger->castDebit();
-                $ledger->castCredit();
+        $start_date = $financial_year->getStartDate();
+        $end_date = $financial_year->getEndDate();
 
-                $total_debit += $ledger->debit;
-                $total_credit += $ledger->credit;
+        $this->transactions->whereBetween('paid_at', [$start_date, $end_date])
+            ->each(function ($transaction) use (&$incomes, &$expenses) {
+                if (($transaction->isNotIncome() && $transaction->isNotExpense()) || $transaction->isTransferTransaction()) {
+                    return;
+                }
+
+                if ($transaction->isIncome()) {
+                    $incomes += $transaction->getAmountConvertedToDefault();
+                } else {
+                    $expenses += $transaction->getAmountConvertedToDefault();
+                }
             });
 
-        return $total_debit - $total_credit;
+        $balance = $incomes - $expenses;
+
+        return $balance;
     }
 
-    /**
-     * Get general ledger report.
-     *
-     * @return \App\Models\Common\Report|null
-     */
-    public function getGeneralLedgerReportAttribute()
-    {
-        return \App\Models\Common\Report::where('class', \Modules\DoubleEntry\Reports\GeneralLedger::class)->first();
-    }
 
-    /**
-     * Get the balance of a category colorized.
-     *
-     * @return string
-     */
-    public function getBalanceColorizedAttribute()
-    {
-        return $this->getBalanceColorized();
-    }
 
-    /**
-     * Get the balance of a category without considering sub categories and colorized.
-     *
-     * @return string
-     */
-    public function getBalanceWithoutSubcategoriesColorizedAttribute()
-    {
-        return $this->getBalanceColorized(false);
-    }
+    // /**
+    //  * Get general ledger report.
+    //  *
+    //  * @return \App\Models\Common\Report|null
+    //  */
+    // public function getGeneralLedgerReportAttribute()
+    // {
+    //     return \App\Models\Common\Report::where('class', \Modules\DoubleEntry\Reports\GeneralLedger::class)->first();
+    // }
 
-    /**
-     * Get the balance formatted (alias for balance_colorized).
-     *
-     * @return string
-     */
-    public function getBalanceFormattedAttribute()
-    {
-        return $this->balance_colorized;
-    }
 
     /**
      * Create a new factory instance for the model.
