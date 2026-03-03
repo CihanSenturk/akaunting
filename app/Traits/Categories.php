@@ -150,7 +150,6 @@ trait Categories
                 'name' => trans_choice($name, 2),
                 'show_code' => $attr['show_code'] ?? false,
             ];
-
         }
 
         event(new CategoryTabsCollecting($tabs));
