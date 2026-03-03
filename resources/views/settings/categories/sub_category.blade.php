@@ -55,11 +55,7 @@
         </x-table.td>
 
         <x-table.td class="w-2/12 py-4 ltr:text-right rtl:text-left whitespace-nowrap text-sm font-normal text-black cursor-pointer truncate">
-            @if(isset($sub_category->balance_formatted))
-                {!! $sub_category->balance_formatted !!}
-            @else
-                <x-empty-data />
-            @endif
+            <x-index.balance :amount="$item->balance" />
         </x-table.td>
 
         <x-table.td kind="action">
