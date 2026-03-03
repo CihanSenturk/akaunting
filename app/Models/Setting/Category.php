@@ -261,7 +261,7 @@ class Category extends Model
 
         $search = $request->get('search');
 
-        $query->withSubcategory();
+        $query->withSubCategory();
 
         $query->usingSearchString($search)->sortable($sort);
 

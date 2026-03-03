@@ -103,7 +103,7 @@ trait Import
     {
         $id = isset($row['contact_id']) ? $row['contact_id'] : null;
 
-        $type = !empty($type) ? $type : (!empty($row['type']) ? (($row['type'] == 'income') ? 'customer' : 'vendor') : 'customer');
+        $type = !empty($type) ? $type : (!empty($row['type']) ? (($row['type'] == Transaction::INCOME_TYPE) ? 'customer' : 'vendor') : 'customer');
 
         if (empty($row['contact_id']) && !empty($row['contact_email'])) {
             $id = $this->getContactIdFromEmail($row, $type);
@@ -180,7 +180,7 @@ trait Import
         }
 
         if (empty($id) && !empty($row['invoice_bill_number'])) {
-            if ($row['type'] == 'income') {
+            if ($row['type'] == Transaction::INCOME_TYPE) {
                 $id = Document::invoice()->number($row['invoice_bill_number'])->pluck('id')->first();
             } else {
                 $id = Document::bill()->number($row['invoice_bill_number'])->pluck('id')->first();
