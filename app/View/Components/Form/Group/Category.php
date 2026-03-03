@@ -35,55 +35,124 @@ class Category extends Form
             $this->name = 'category_id';
         }
 
-        $this->group = true;
-
         $this->path = route('modals.categories.create', ['type' => $this->type]);
         $this->remoteAction = route('categories.index', ['search' => 'type:' . $this->type . ' enabled:1']);
 
-        $de_categories = [];
+        //$this->group = true;
 
-        $typeGroups = collect(config('type.category', []))
-            ->keys()
-            ->mapWithKeys(fn($type) => [
-                $type => trans_choice('double-entry::category_types.' . \Illuminate\Support\Str::plural($type), 1)
-            ]);
+        switch ($this->type) {
+            case Model::INCOME_TYPE:
+                $types = $this->getIncomeCategoryTypes();
+                break;
+            case Model::EXPENSE_TYPE:
+                $types = $this->getExpenseCategoryTypes();
+                break;
+            case Model::ITEM_TYPE:
+                $types = $this->getItemCategoryTypes();
+                break;
+            case Model::OTHER_TYPE:
+                $types = $this->getOtherCategoryTypes();
+                break;
+            default:
+                $types = [$this->type];
+        }
 
-        $types = $this->getIncomeCategoryTypes();
+        $is_code = false;
 
-        Model::whereNotNull('code')
-            ->enabled()
-            ->type($typeGroups->keys()->toArray())
-            ->orderBy('code')
-            ->get()
-            ->each(function ($category) use (&$de_categories, $typeGroups) {
-                $group = $typeGroups[$category->type] ?? trans_choice('general.others', 1);
+        foreach (config('type.category', []) as $type => $config) {
+            if (! in_array($type, $types)) {
+                continue;
+            }
+
+            if (empty($config['hide']) || ! in_array('code', $config['hide'])) {
+                $is_code = true;
+                break;
+            }
+        }
+
+        $order_by = $is_code ? 'code' : 'name';
+
+        $query = Model::type($types);
+
+        $query->enabled()
+            ->orderBy($order_by);
+
+        if (! $this->group) {
+            $query->take(setting('default.select_limit'));
+        }
+
+        $this->categories = $query->get();
+
+        if ($this->group) {
+            $groups = [];
+
+            foreach ($this->categories as $category) {
+                $group = $types[$category->type] ?? trans_choice('general.others', 1);
 
                 $category->title = ($category->code ? $category->code . ' - ' : '') . $category->name;
 
-                $de_categories[$group][$category->id] = $category;
-            });
+                $groups[$group][$category->id] = $category;
+            }
 
-        ksort($de_categories);
+            ksort($groups);
 
-        $this->categories = $de_categories;
-
-        //$this->has_double_entry = $this->moduleIsEnabled('double-entry');
+            $this->categories = $groups;
+        }
 
         $model = $this->getParentData('model');
+        $selected_category = null;
+
+        $categoryExists = function ($categoryId): bool {
+            if (! $this->group) {
+                return $this->categories->contains(function ($category) use ($categoryId) {
+                    return (int) $category->id === (int) $categoryId;
+                });
+            }
+
+            foreach ($this->categories as $group_categories) {
+                foreach ($group_categories as $category) {
+                    if ((int) $category->id === (int) $categoryId) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        };
+
+        $appendCategory = function ($category) use ($types): void {
+            if (empty($category)) {
+                return;
+            }
+
+            $category->title = ($category->code ? $category->code . ' - ' : '') . $category->name;
+
+            if (! $this->group) {
+                $this->categories->push($category);
+
+                return;
+            }
+
+            $group = $types[$category->type] ?? trans_choice('general.others', 1);
+
+            if (! isset($this->categories[$group])) {
+                $this->categories[$group] = [];
+            }
+
+            $this->categories[$group][$category->id] = $category;
+
+            ksort($this->categories);
+        };
 
         $category_id = old('category.id', old('category_id', null));
 
         if (! empty($category_id)) {
             $this->selected = $category_id;
 
-            $has_category = $this->categories->search(function ($category, int $key) use ($category_id) {
-                return $category->id === $category_id;
-            });
-
-            if ($has_category === false) {
+            if (! $categoryExists($category_id)) {
                 $category = Model::find($category_id);
 
-                $this->categories->push($category);
+                $appendCategory($category);
             }
         }
 
@@ -99,15 +168,15 @@ class Category extends Form
             $selected_category = Model::find($this->selected);
         }
 
+        if (empty($selected_category) && ! empty($this->selected)) {
+            $selected_category = Model::find($this->selected);
+        }
+
         if (! empty($selected_category)) {
             $selected_category_id = $selected_category->id;
 
-            $has_selected_category = $this->categories->search(function ($category, int $key) use ($selected_category_id) {
-                return $category->id === $selected_category_id;
-            });
-
-            if ($has_selected_category === false) {
-                $this->categories->push($selected_category);
+            if (! $categoryExists($selected_category_id)) {
+                $appendCategory($selected_category);
             }
         }
 
