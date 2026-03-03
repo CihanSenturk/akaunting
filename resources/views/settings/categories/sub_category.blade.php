@@ -4,7 +4,7 @@
             <x-index.bulkaction.single id="{{ $sub_category->id }}" name="{{ $sub_category->name }}" />
         </x-table.td>
 
-        @if ($tabs[$tab_active]['show_code'] ?? false)
+        @if (!$hide_code_column && (empty(config('type.category.' . $sub_category->type . '.hide', [])) || ! in_array('code', config('type.category.' . $sub_category->type . '.hide'))))
             <x-table.td class="w-1/12 py-4 ltr:text-left rtl:text-right whitespace-nowrap text-sm font-medium text-black truncate">
                 @if(!empty($sub_category->code))
                     {{ $sub_category->code }}
@@ -73,6 +73,6 @@
     @endphp
 
     @foreach($sub_category->sub_categories as $sub_category)
-        @include('settings.categories.sub_category', ['parent_category' => $parent_category, 'sub_category' => $sub_category, 'tree_level' => $tree_level])
+        @include('settings.categories.sub_category', ['parent_category' => $parent_category, 'sub_category' => $sub_category, 'tree_level' => $tree_level, 'hide_code_column' => $hide_code_column, 'name_class' => $name_class])
     @endforeach
 @endif

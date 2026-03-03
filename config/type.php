@@ -15,6 +15,7 @@ return [
             'translation' => [
                 'prefix'        => 'general',
             ],
+            'hide' => ['code'],
         ],
 
         Category::EXPENSE_TYPE => [
@@ -23,6 +24,7 @@ return [
             'translation' => [
                 'prefix'        => 'general',
             ],
+            'hide' => ['code'],
         ],
 
         Category::ITEM_TYPE => [
@@ -31,6 +33,7 @@ return [
             'translation' => [
                 'prefix'        => 'general',
             ],
+            'hide' => ['code'],
         ],
 
         Category::OTHER_TYPE => [
@@ -39,6 +42,7 @@ return [
             'translation' => [
                 'prefix'        => 'general',
             ],
+            'hide' => ['code'],
         ],
     ],
 

@@ -13,10 +13,11 @@ use App\Jobs\Setting\UpdateCategory;
 use App\Models\Setting\Category;
 use App\Traits\Categories as Helper;
 use App\Traits\Modules;
+use App\Traits\SearchString;
 
 class Categories extends Controller
 {
-    use Helper, Modules;
+    use Helper, Modules, SearchString;
 
     /**
      * Display a listing of the resource.
@@ -35,7 +36,7 @@ class Categories extends Controller
 
         $types = $this->getCategoryTypes();
 
-        if (request()->get('list_records') != 'all') {
+        if (request()->get('list_records') == 'all') {
             $query->type(array_keys($types));
         }
 
@@ -46,7 +47,23 @@ class Categories extends Controller
         $tab = request()->get('list_records');
         $tab_active = ! empty($tab) ? 'categories-' . $tab : 'categories-all';
 
-        return $this->response('settings.categories.index', compact('categories', 'types', 'tabs', 'tab_active'));
+        $hide_code_column = true;
+
+        $search_string_type = $this->getSearchStringValue('type');
+        $selected_types = ! empty($search_string_type) ? explode(',', $search_string_type) : array_keys($types);
+
+        foreach (config('type.category', []) as $type => $config) {
+            if (! in_array($type, $selected_types)) {
+                continue;
+            }
+
+            if (empty($config['hide']) || !in_array('code', $config['hide'])) {
+                $hide_code_column = false;
+                break;
+            }
+        }
+
+        return $this->response('settings.categories.index', compact('categories', 'types', 'tabs', 'tab_active', 'hide_code_column'));
     }
 
     /**

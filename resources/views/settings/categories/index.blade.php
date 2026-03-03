@@ -77,6 +77,10 @@
                 </x-slot>
 
                 <x-slot name="content">
+                    @php
+                        $name_class = $hide_code_column ? 'w-5/12' : 'w-4/12';
+                    @endphp
+
                     <x-tabs.tab id="{{ $tab_active }}">
                         <x-index.search
                             search-string="App\Models\Setting\Category"
@@ -90,11 +94,7 @@
                                         <x-index.bulkaction.all />
                                     </x-table.th>
 
-                                    @php
-                                        $name_class = ($tabs[$tab_active]['show_code'] ?? false) ? 'w-4/12' : 'w-5/12';
-                                    @endphp
-
-                                    @if ($tabs[$tab_active]['show_code'] ?? false)
+                                    @if (!$hide_code_column)
                                         <x-table.th class="w-1/12">
                                             <x-sortablelink column="code" title="{{ trans('general.code') }}" />
                                         </x-table.th>
@@ -125,7 +125,7 @@
                                             />
                                         </x-table.td>
 
-                                        @if ($tabs[$tab_active]['show_code'] ?? false)
+                                        @if (!$hide_code_column)
                                             <x-table.td class="w-1/12">
                                                 @if(!empty($item->code))
                                                     {{ $item->code }}
@@ -190,7 +190,7 @@
                                     </x-table.tr>
 
                                     @foreach($item->sub_categories as $sub_category)
-                                        @include('double-entry::settings.categories.sub_category', ['parent_category' => $item, 'sub_category' => $sub_category, 'tree_level' => 1])
+                                        @include('double-entry::settings.categories.sub_category', ['parent_category' => $item, 'sub_category' => $sub_category, 'tree_level' => 1, 'hide_code_column' => $hide_code_column, 'name_class' => $name_class])
                                     @endforeach
                                 @endforeach
                             </x-table.tbody>
