@@ -1,5 +1,4 @@
-@if ($has_double_entry)
-@elseif (($attributes->has('withoutRemote') || $attributes->has('without-remote')) && (! $attributes->has('withoutAddNew') && ! $attributes->has('without-add-new')))
+@if (($attributes->has('withoutRemote') || $attributes->has('without-remote')) && (! $attributes->has('withoutAddNew') && ! $attributes->has('without-add-new')))
     <x-form.group.select
         add-new
         path="{{ $path }}"

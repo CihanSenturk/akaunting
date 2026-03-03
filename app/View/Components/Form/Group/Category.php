@@ -57,6 +57,8 @@ class Category extends Form
                 $types = [$this->type];
         }
 
+        $typeLabels = collect($this->getCategoryTypes())->only($types)->all();
+
         $is_code = false;
 
         foreach (config('type.category', []) as $type => $config) {
@@ -87,7 +89,7 @@ class Category extends Form
             $groups = [];
 
             foreach ($this->categories as $category) {
-                $group = $types[$category->type] ?? trans_choice('general.others', 1);
+                $group = $typeLabels[$category->type] ?? trans_choice('general.others', 1);
 
                 $category->title = ($category->code ? $category->code . ' - ' : '') . $category->name;
 
@@ -120,7 +122,7 @@ class Category extends Form
             return false;
         };
 
-        $appendCategory = function ($category) use ($types): void {
+        $appendCategory = function ($category) use ($typeLabels): void {
             if (empty($category)) {
                 return;
             }
@@ -133,7 +135,7 @@ class Category extends Form
                 return;
             }
 
-            $group = $types[$category->type] ?? trans_choice('general.others', 1);
+            $group = $typeLabels[$category->type] ?? trans_choice('general.others', 1);
 
             if (! isset($this->categories[$group])) {
                 $this->categories[$group] = [];
