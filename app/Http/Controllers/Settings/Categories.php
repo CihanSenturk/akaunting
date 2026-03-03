@@ -31,7 +31,7 @@ class Categories extends Controller
         $query = Category::with('sub_categories');
 
         if (request()->has('search')) {
-            $query->withSubcategory();
+            $query->withSubCategory();
         }
 
         $types = $this->getCategoryTypes();
