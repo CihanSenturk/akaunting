@@ -289,9 +289,17 @@ class Category extends Model
     /**
      * Get the display name of the category.
      */
-    public function getDisplayNameAttribute()
+    public function getDisplayNameAttribute(): string
     {
-        return $this->name . ' (' . ucfirst($this->type) . ')';
+        $typeConfig = config('type.category.' . $this->type, []);
+        $hideCode = isset($typeConfig['hide']) && in_array('code', $typeConfig['hide']);
+
+        $typeNames = $this->getCategoryTypes();
+        $typeName = $typeNames[$this->type] ?? ucfirst($this->type);
+
+        $prefix = (!$hideCode && $this->code) ? $this->code . ' - ' : '';
+
+        return $prefix . $this->name . ' (' . $typeName . ')';
     }
 
     /**
