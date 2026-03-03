@@ -3,7 +3,6 @@
 namespace App\Traits;
 
 use App\Events\Setting\CategoryTabsCollecting;
-use App\Events\Setting\CategoryTypesCollecting;
 use App\Models\Setting\Category;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
