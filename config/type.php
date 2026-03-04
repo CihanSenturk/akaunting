@@ -15,7 +15,7 @@ return [
             'translation' => [
                 'prefix'        => 'general',
             ],
-            'hide' => ['code'],
+            //'hide' => ['code'],
         ],
 
         Category::EXPENSE_TYPE => [

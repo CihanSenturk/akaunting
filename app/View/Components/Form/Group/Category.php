@@ -6,6 +6,7 @@ use App\Abstracts\View\Components\Form;
 use App\Models\Setting\Category as Model;
 use App\Traits\Categories;
 use App\Traits\Modules;
+use Illuminate\Support\Arr;
 
 class Category extends Form
 {
@@ -22,6 +23,11 @@ class Category extends Form
     /** @var bool */
     public $group;
 
+    public $option_field = [
+        'key' => 'id',
+        'value' => 'name',
+    ];
+
     /**
      * Get the view / contents that represent the component.
      *
@@ -32,9 +38,6 @@ class Category extends Form
         if (empty($this->name)) {
             $this->name = 'category_id';
         }
-
-        $this->path = route('modals.categories.create', ['type' => $this->type]);
-        $this->remoteAction = route('categories.index', ['search' => 'type:' . $this->type . ' enabled:1']);
 
         switch ($this->type) {
             case Model::INCOME_TYPE:
@@ -53,6 +56,9 @@ class Category extends Form
                 $types = [$this->type];
         }
 
+        $this->path = route('modals.categories.create', ['type' => Arr::first($types)]);
+        $this->remoteAction = route('categories.index', ['search' => 'type:' . implode(',', $types) . ' enabled:1']);
+
         $typeLabels = collect($this->getCategoryTypes())->only($types)->all();
 
         $is_code = false;
@@ -64,13 +70,19 @@ class Category extends Form
 
             if (empty($config['hide']) || ! in_array('code', $config['hide'])) {
                 $is_code = true;
+                $this->group = true;
                 break;
             }
         }
 
-        $this->group = $this->group ?? $is_code;
-
         $order_by = $is_code ? 'code' : 'name';
+
+        if ($this->group) {
+            $this->option_field = [
+                'key' => 'id',
+                'value' => 'title',
+            ];
+        }
 
         $query = Model::type($types);
 
@@ -90,6 +102,7 @@ class Category extends Form
                 $group = $typeLabels[$category->type] ?? trans_choice('general.others', 1);
 
                 $category->title = ($category->code ? $category->code . ' - ' : '') . $category->name;
+                $category->group = $group;
 
                 $groups[$group][$category->id] = $category;
             }
