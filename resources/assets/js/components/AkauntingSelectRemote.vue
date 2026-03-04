@@ -56,16 +56,14 @@
             <div v-if="!loading && addNew.status && options.length == 0">
                 <el-option class="text-center" disabled :label="noDataText" value="value"></el-option>
 
-                <ul class="el-scrollbar__view el-select-dropdown__list">
-                    <li class="el-select-dropdown__item el-select__footer bg-purple sticky bottom-0">
-                        <div class="w-full flex items-center" @click="onAddItem">
-                            <span class="material-icons text-xl text-purple">add</span>
-                            <span class="flex-1 font-bold text-purple">
-                                {{ addNew.text }}
-                            </span>
-                        </div>
-                    </li>
-                </ul>
+                <li class="el-select-dropdown__item el-select__footer bg-purple sticky bottom-0">
+                    <div class="w-full flex items-center" @click="onAddItem">
+                        <span class="material-icons text-xl text-purple">add</span>
+                        <span class="flex-1 font-bold text-purple">
+                            {{ addNew.text }}
+                        </span>
+                    </div>
+                </li>
             </div>
 
             <template slot="prefix">
@@ -185,16 +183,15 @@
 
             <div v-if="!loading && addNew.status && options.length == 0">
                 <el-option class="text-center" disabled :label="noDataText" value="value"></el-option>
-                <ul class="el-scrollbar__view el-select-dropdown__list">
-                    <li class="el-select-dropdown__item el-select__footer bg-purple sticky bottom-0">
-                        <div class="w-full flex items-center" @click="onAddItem">
-                            <span class="material-icons text-xl text-purple">add</span>
-                            <span class="flex-1 font-bold text-purple">
-                                {{ addNew.text }}
-                            </span>
-                        </div>
-                    </li>
-                </ul>
+
+                <li class="el-select-dropdown__item el-select__footer bg-purple sticky bottom-0">
+                    <div class="w-full flex items-center" @click="onAddItem">
+                        <span class="material-icons text-xl text-purple">add</span>
+                        <span class="flex-1 font-bold text-purple">
+                            {{ addNew.text }}
+                        </span>
+                    </div>
+                </li>
             </div>
 
             <template slot="prefix">
@@ -1497,6 +1494,6 @@ export default {
     }
 
     .el-select-dropdown__item.el-select__footer.bg-purple.sticky.bottom-0:hover {
-        background-color: 55588b !important;
+        background-color: #55588b !important;
     }
 </style>
