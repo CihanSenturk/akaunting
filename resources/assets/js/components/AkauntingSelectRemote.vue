@@ -141,10 +141,17 @@
 
         <span slot="infoBlock" class="absolute right-8 top-3 bg-green text-white px-2 py-1 rounded-md text-xs" v-if="new_options[selected] || (sorted_options.length && sorted_options[sorted_options.length - 1].mark_new && sorted_options[sorted_options.length - 1].key == selected)">{{ addNew.new_text }}</span>
 
+        <span
+            slot="infoBlock"
+            class="absolute right-8 top-4 rounded-md bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
+            v-if="group && selectedGroupLabel"
+        >
+            {{ selectedGroupLabel }}
+        </span>
+
         <select :name="name"  :id="name + '-' + _uid" class="hidden">
             <option v-for="option in sortedOptions" :key="option.key" :value="option.key">{{ option.value }}</option>
         </select>
-
     </base-input>
 
     <span v-else>
@@ -262,12 +269,19 @@
                     </span>
                 </div>
             </el-option>
-
         </el-select>
 
         <component v-bind:is="add_new_html" @submit="onSubmit" @cancel="onCancel"></component>
 
         <span slot="infoBlock" class="absolute right-8 top-3 bg-green text-white px-2 py-1 rounded-md text-xs" v-if="new_options[selected] || (sorted_options.length && sorted_options[sorted_options.length - 1].mark_new && sorted_options[sorted_options.length - 1].key == selected)">{{ addNew.new_text }}</span>
+
+        <span
+            slot="infoBlock"
+            class="absolute right-8 top-4 rounded-md bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
+            v-if="group && selectedGroupLabel"
+        >
+            {{ selectedGroupLabel }}
+        </span>
 
         <select :name="name" :id="name + '-' + _uid" v-model="selected" class="d-none">
             <option v-for="option in sortedOptions" :key="option.key" :value="option.key">{{ option.value }}</option>
@@ -546,6 +560,26 @@ export default {
 
             return this.sorted_options;
         },
+
+        selectedGroupLabel() {
+            if (!this.group || !Array.isArray(this.sorted_options) || !this.sorted_options.length) {
+                return '';
+            }
+
+            if (this.multiple) {
+                if (!Array.isArray(this.selected) || !this.selected.length) {
+                    return '';
+                }
+
+                const labels = this.selected
+                    .map(value => this.findGroupLabelByOptionKey(value))
+                    .filter(Boolean);
+
+                return [...new Set(labels)].join(', ');
+            }
+
+            return this.findGroupLabelByOptionKey(this.selected);
+        },
     },
 
     mounted() {
@@ -576,6 +610,28 @@ export default {
     },
 
     methods: {
+        findGroupLabelByOptionKey(optionKey) {
+            if (optionKey === null || optionKey === undefined || optionKey === '') {
+                return '';
+            }
+
+            const normalizedKey = optionKey.toString();
+
+            const foundGroup = this.sorted_options.find(groupOption => {
+                if (!Array.isArray(groupOption.value)) {
+                    return false;
+                }
+
+                return groupOption.value.some(option => option.key == normalizedKey);
+            });
+
+            if (!foundGroup) {
+                return '';
+            }
+
+            return foundGroup.key ? foundGroup.key.toString() : '';
+        },
+
         sortBy(option) {
             return (firstEl, secondEl) => {
                 let first_element = firstEl[option].toUpperCase(); // ignore upper and lowercase
