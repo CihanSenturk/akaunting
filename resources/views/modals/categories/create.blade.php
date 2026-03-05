@@ -6,7 +6,12 @@
 
         <x-form.group.select name="parent_id" label="{{ trans('general.parent') . ' ' . trans_choice('general.categories', 1) }}" :options="$categories" not-required sort-options="false" searchable form-group-class="col-span-6" />
 
-        <x-form.input.hidden name="type" value="{{ $type }}" />
+        @if (!empty($types) && count($types) > 1)
+            <x-form.group.select name="type" label="{{ trans_choice('general.types', 1) }}" :options="$types" value="{{ $type }}" form-group-class="col-span-6" />
+        @else
+            <x-form.input.hidden name="type" value="{{ $type }}" />
+        @endif
+
         <x-form.input.hidden name="enabled" value="1" />
     </div>
 </x-form>

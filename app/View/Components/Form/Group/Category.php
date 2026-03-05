@@ -56,7 +56,7 @@ class Category extends Form
                 $types = [$this->type];
         }
 
-        $this->path = route('modals.categories.create', ['type' => Arr::first($types)]);
+        $this->path = route('modals.categories.create', ['type' => $this->type]);
         $this->remoteAction = route('categories.index', ['search' => 'type:' . implode(',', $types) . ' enabled:1']);
 
         $typeLabels = collect($this->getCategoryTypes())->only($types)->all();
