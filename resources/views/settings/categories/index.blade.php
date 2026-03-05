@@ -186,7 +186,7 @@
                                     </x-table.tr>
 
                                     @foreach($item->sub_categories as $sub_category)
-                                        @include('double-entry::settings.categories.sub_category', ['parent_category' => $item, 'sub_category' => $sub_category, 'tree_level' => 1, 'hide_code_column' => $hide_code_column, 'name_class' => $name_class])
+                                        @include('settings.categories.sub_category', ['parent_category' => $item, 'sub_category' => $sub_category, 'tree_level' => 1, 'hide_code_column' => $hide_code_column, 'name_class' => $name_class])
                                     @endforeach
                                 @endforeach
                             </x-table.tbody>
