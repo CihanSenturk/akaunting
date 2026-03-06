@@ -7,11 +7,12 @@ use App\Http\Requests\Setting\Category as Request;
 use App\Jobs\Setting\CreateCategory;
 use App\Models\Setting\Category;
 use App\Traits\Categories as Helper;
+use App\Traits\Modules;
 use Illuminate\Http\Request as IRequest;
 
 class Categories extends Controller
 {
-    use Helper;
+    use Helper, Modules;
 
     /**
      * Instantiate a new controller instance.
@@ -65,7 +66,9 @@ class Categories extends Controller
                 ]);
             });
 
-        $html = view('modals.categories.create', compact('type', 'types', 'categories'))->render();
+        $has_code = $this->moduleIsEnabled('double-entry');
+
+        $html = view('modals.categories.create', compact('type', 'types', 'categories', 'has_code'))->render();
 
         return response()->json([
             'success' => true,
