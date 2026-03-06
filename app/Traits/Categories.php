@@ -86,7 +86,7 @@ trait Categories
 
     public function addCategoryType(string $new_type, string $index): void
     {
-        $types = explode(',', setting('category.type.' . $index));
+        $types = !empty(setting('category.type.' . $index)) ? explode(',', setting('category.type.' . $index)) : [];
 
         if (in_array($new_type, $types)) {
             return;
