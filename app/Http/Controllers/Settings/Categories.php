@@ -13,11 +13,10 @@ use App\Jobs\Setting\UpdateCategory;
 use App\Models\Setting\Category;
 use App\Traits\Categories as Helper;
 use App\Traits\Modules;
-use App\Traits\SearchString;
 
 class Categories extends Controller
 {
-    use Helper, Modules, SearchString;
+    use Helper, Modules;
 
     /**
      * Display a listing of the resource.
@@ -30,7 +29,7 @@ class Categories extends Controller
 
         $query = Category::with('sub_categories');
 
-        if (request()->has('search')) {
+        if (search_string_value('searchable')) {
             $query->withSubCategory();
         }
 
@@ -49,7 +48,7 @@ class Categories extends Controller
 
         $hide_code_column = true;
 
-        $search_string_type = $this->getSearchStringValue('type');
+        $search_string_type = search_string_value('type');
         $selected_types = ! empty($search_string_type) ? explode(',', $search_string_type) : array_keys($types);
 
         foreach (config('type.category', []) as $type => $config) {

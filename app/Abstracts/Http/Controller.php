@@ -185,7 +185,16 @@ abstract class Controller extends BaseController
             if (!empty($types) && count($types) > 0) {
                 request()->offsetSet('list_records', $tab);
 
-                request()->offsetSet('search', 'type:' . implode(',', $types));
+                // Update only type: filter while preserving other search filters
+                $currentSearch = request('search', '');
+                $searchParts = array_filter(explode(' ', $currentSearch), function($part) {
+                    return !empty(trim($part)) && !str_starts_with(trim($part), 'type:');
+                });
+
+                // Add new type: filter
+                $searchParts[] = 'type:' . implode(',', $types);
+
+                request()->offsetSet('search', implode(' ', $searchParts));
                 request()->offsetSet('programmatic', '1');
                 return;
             }
