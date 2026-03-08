@@ -55,7 +55,7 @@
         </x-table.td>
 
         <x-table.td class="w-2/12 py-4 ltr:text-right rtl:text-left whitespace-nowrap text-sm font-normal text-black cursor-pointer truncate">
-            <x-index.balance :amount="$item->balance" />
+            <x-index.balance :amount="$sub_category->balance" />
         </x-table.td>
 
         <x-table.td kind="action">
