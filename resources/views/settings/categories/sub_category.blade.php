@@ -1,11 +1,12 @@
 @if ($sub_category->sub_categories)
     @if ($loop->first)
         <x-table.tr data-collapse="child-{{ $parent_category->id }}" data-animation class="relative flex items-center hover:bg-gray-100 px-1 group border-b transition-all collapse-sub" href="{{ route('categories.edit', $sub_category->id) }}">
-            <x-table.td>
+            <x-table.td kind="bulkaction">
+                <x-index.bulkaction.single id="{{ $parent_category->id }}" name="{{ $parent_category->name }}" disabled />
             </x-table.td>
 
             @if (!$hide_code_column && (empty(config('type.category.' . $parent_category->type . '.hide', [])) || ! in_array('code', config('type.category.' . $sub_category->type . '.hide'))))
-                <x-table.td class="w-1/12 py-4 ltr:text-left rtl:text-right whitespace-nowrap text-sm font-medium text-black truncate" style="padding-left: {{ $tree_level * 10 }}px;">
+                <x-table.td class="w-1/12 py-4 ltr:text-left rtl:text-right whitespace-nowrap text-sm font-medium text-black truncate">
                     @if(!empty($parent_category->code))
                         {{ $parent_category->code }}
                     @else
@@ -38,10 +39,6 @@
 
             <x-table.td class="w-2/12 py-4 ltr:text-right rtl:text-left whitespace-nowrap text-sm font-normal text-black cursor-pointer truncate">
                 <x-index.balance :amount="$parent_category->balance_without_subcategories" />
-            </x-table.td>
-
-            <x-table.td kind="action">
-                <x-table.actions :model="$parent_category" />
             </x-table.td>
         </x-table.tr>
     @endif
