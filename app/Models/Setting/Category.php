@@ -304,66 +304,6 @@ class Category extends Model
     }
 
     /**
-     * Get the line actions.
-     *
-     * @return array
-     */
-    public function getLineActionsAttribute()
-    {
-        $actions = [];
-
-        $actions[] = [
-            'title' => trans('general.edit'),
-            'icon' => 'create',
-            'url' => route('categories.edit', $this->id),
-            'permission' => 'update-settings-categories',
-            'attributes' => [
-                'id' => 'index-line-actions-edit-category-' . $this->id,
-            ],
-        ];
-
-        if ($this->isTransferCategory()) {
-            return $actions;
-        }
-
-        $actions[] = [
-            'type' => 'delete',
-            'icon' => 'delete',
-            'route' => 'categories.destroy',
-            'permission' => 'delete-settings-categories',
-            'attributes' => [
-                'id' => 'index-line-actions-delete-category-' . $this->id,
-            ],
-            'model' => $this,
-        ];
-
-        return $actions;
-    }
-
-    /**
-     * A no-op callback that gets fired when a model is cloning but before it gets
-     * committed to the database
-     *
-     * @param  Illuminate\Database\Eloquent\Model $src
-     * @param  boolean $child
-     * @return void
-     */
-    public function onCloning($src, $child = null)
-    {
-        $this->code = $this->getNextCategoryCode();
-    }
-
-    /**
-     * Get the translated name attribute.
-     *
-     * @return string
-     */
-    public function getTransNameAttribute()
-    {
-        return is_array(trans($this->name)) ? $this->name : trans($this->name);
-    }
-
-    /**
      * Get the balance of a category.
      *
      * @return double
@@ -438,18 +378,55 @@ class Category extends Model
         return $balance;
     }
 
+    /**
+     * Get the line actions.
+     *
+     * @return array
+     */
+    public function getLineActionsAttribute()
+    {
+        $actions = [];
 
+        $actions[] = [
+            'title' => trans('general.edit'),
+            'icon' => 'create',
+            'url' => route('categories.edit', $this->id),
+            'permission' => 'update-settings-categories',
+            'attributes' => [
+                'id' => 'index-line-actions-edit-category-' . $this->id,
+            ],
+        ];
 
-    // /**
-    //  * Get general ledger report.
-    //  *
-    //  * @return \App\Models\Common\Report|null
-    //  */
-    // public function getGeneralLedgerReportAttribute()
-    // {
-    //     return \App\Models\Common\Report::where('class', \Modules\DoubleEntry\Reports\GeneralLedger::class)->first();
-    // }
+        if ($this->isTransferCategory()) {
+            return $actions;
+        }
 
+        $actions[] = [
+            'type' => 'delete',
+            'icon' => 'delete',
+            'route' => 'categories.destroy',
+            'permission' => 'delete-settings-categories',
+            'attributes' => [
+                'id' => 'index-line-actions-delete-category-' . $this->id,
+            ],
+            'model' => $this,
+        ];
+
+        return $actions;
+    }
+
+    /**
+     * A no-op callback that gets fired when a model is cloning but before it gets
+     * committed to the database
+     *
+     * @param  Illuminate\Database\Eloquent\Model $src
+     * @param  boolean $child
+     * @return void
+     */
+    public function onCloning($src, $child = null)
+    {
+        $this->code = $this->getNextCategoryCode();
+    }
 
     /**
      * Create a new factory instance for the model.
