@@ -18,6 +18,22 @@ return [
     'banks'                 => 'Bank|Banks',
     'credit_cards'          => 'Credit Card|Credit Cards',
 
+    'bank_feed' => [
+        'title'             => 'Connect Your Bank',
+        'description'       => 'Connect your bank to Akaunting and let your transactions come in on their own, day after day, instead of being typed in one by one.',
+        'action'            => 'Get Bank Feeds',
+        'add_without'       => 'Add without bank feed',
+
+        'action_description'        => 'Connect your bank and let the transactions come in on their own.',
+        'add_without_description'   => 'Enter the account by hand and keep its transactions up to date yourself.',
+
+        'benefits' => [
+            'sync'          => 'Your bank transactions are fetched and kept up to date automatically.',
+            'match'         => 'Incoming transactions are matched with your invoices and bills.',
+            'reconcile'     => 'Your balance always follows your bank, so reconciliation takes minutes.',
+        ],
+    ],
+
     'form_description' => [
         'general'           => 'Use credit card type for negative opening balance. The number is essential to reconcile accounts correctly. Default account will record all transactions if not selected otherwise.',
         'bank'              => 'You may have multiple bank accounts in more than one banks. Recording information about your bank will make it easier to match the transactions within your bank.',
