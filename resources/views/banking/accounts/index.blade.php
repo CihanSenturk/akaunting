@@ -11,7 +11,9 @@
 
     <x-slot name="buttons">
         @can('create-banking-accounts')
-            <x-link href="{{ route('accounts.create') }}" kind="primary" id="index-more-actions-new-account">
+            {{-- Where a new account begins: an app that connects banks takes that page over,
+                 and without one it offers the app beside the way on to the form --}}
+            <x-link href="{{ route('accounts.connect') }}" kind="primary" id="index-more-actions-new-account">
                 {{ trans('general.title.new', ['type' => trans_choice('general.accounts', 1)]) }}
             </x-link>
         @endcan
@@ -24,89 +26,71 @@
                 bulk-action="App\BulkActions\Banking\Accounts"
             />
 
-            <x-table>
-                <x-table.thead>
-                    <x-table.tr>
-                        <x-table.th kind="bulkaction">
-                            <x-index.bulkaction.all />
-                        </x-table.th>
+            <x-index.cards
+                sort-id="index-sort-account"
+                :sortable="[
+                    'name'      => trans('general.name'),
+                    'number'    => trans('accounts.number'),
+                    'bank_name' => trans('accounts.bank_name'),
+                    'balance'   => trans('accounts.current_balance'),
+                ]"
+            >
+                @foreach($accounts as $item)
+                    <x-index.card :model="$item" :href="route('accounts.show', $item->id)">
+                        <x-slot name="title">
+                            <span class="truncate">{{ $item->name }}</span>
 
-                        <x-table.th class="w-6/12 sm:w-5/12">
-                            <x-slot name="first">
-                                <x-sortablelink column="name" title="{{ trans('general.name') }}" />
-                            </x-slot>
-                            <x-slot name="second">
-                                <x-sortablelink column="number" title="{{ trans('accounts.number') }}" />
-                            </x-slot>
-                        </x-table.th>
+                            @if (! $item->enabled)
+                                <x-index.disable text="{{ trans_choice('general.accounts', 1) }}" />
+                            @endif
 
-                        <x-table.th class="w-4/12" hidden-mobile>
-                            <x-slot name="first">
-                                <x-sortablelink column="bank_name" title="{{ trans('accounts.bank_name') }}" />
-                            </x-slot>
-                            <x-slot name="second">
-                                <x-sortablelink column="bank_phone" title="{{ trans('accounts.bank_phone') }}" />
-                            </x-slot>
-                        </x-table.th>
+                            @if (setting('default.account') == $item->id)
+                                <x-index.default text="{{ trans('accounts.default_account') }}" />
+                            @endif
+                        </x-slot>
 
-                        <x-table.th class="w-6/12 sm:w-3/12" kind="amount">
-                            <x-sortablelink column="balance" title="{{ trans('accounts.current_balance') }}" />
-                        </x-table.th>
-                    </x-table.tr>
-                </x-table.thead>
+                        <x-slot name="subtitle">
+                            @if (! empty($item->number))
+                                {{ $item->number }}
+                            @else
+                                <x-empty-data />
+                            @endif
+                        </x-slot>
 
-                <x-table.tbody>
-                    @foreach($accounts as $item)
-                        <x-table.tr href="{{ route('accounts.show', $item->id) }}">
-                            <x-table.td kind="bulkaction">
-                                <x-index.bulkaction.single id="{{ $item->id }}" name="{{ $item->name }}" />
-                            </x-table.td>
+                        <x-slot name="actions">
+                            <x-index.card.actions :model="$item" id="index-line-actions-account-{{ $item->id }}" />
+                        </x-slot>
 
-                            <x-table.td class="w-6/12 sm:w-5/12">
-                                <x-slot name="first" class="flex font-bold">
-                                    {{ $item->name }}
+                        <div class="min-w-0 text-xs text-black-400">
+                            <div class="truncate">
+                                @if (! empty($item->bank_name))
+                                    {{ $item->bank_name }}
+                                @else
+                                    <x-empty-data />
+                                @endif
+                            </div>
 
-                                    @if (! $item->enabled)
-                                        <x-index.disable text="{{ trans_choice('general.accounts', 1) }}" />
-                                    @endif
+                            <div class="truncate">
+                                @if (! empty($item->bank_phone))
+                                    {{ $item->bank_phone }}
+                                @else
+                                    <x-empty-data />
+                                @endif
+                            </div>
+                        </div>
 
-                                    @if (setting('default.account') == $item->id)
-                                        <x-index.default text="{{ trans('accounts.default_account') }}" />
-                                    @endif
-                                </x-slot>
-                                <x-slot name="second" class="font-normal truncate">
-                                    {{ $item->number }}
-                                </x-slot>
-                            </x-table.td>
+                        <div class="shrink-0 ltr:ml-2 rtl:mr-2 ltr:text-right rtl:text-left">
+                            <div class="text-xs text-black-400">
+                                {{ trans('accounts.current_balance') }}
+                            </div>
 
-                            <x-table.td class="w-4/12" hidden-mobile>
-                                <x-slot name="first">
-                                    @if (! empty($item->bank_name))
-                                        {{ $item->bank_name }}
-                                    @else
-                                        <x-empty-data />
-                                    @endif
-                                </x-slot>
-                                <x-slot name="second">
-                                    @if (! empty($item->bank_phone))
-                                        {{ $item->bank_phone }}
-                                    @else
-                                        <x-empty-data />
-                                    @endif
-                                </x-slot>
-                            </x-table.td>
-
-                            <x-table.td class="w-6/12 sm:w-3/12" kind="amount">
+                            <div class="text-lg font-bold">
                                 <x-money :amount="$item->balance" :currency="$item->currency_code" />
-                            </x-table.td>
-
-                            <x-table.td kind="action">
-                                <x-table.actions :model="$item" />
-                            </x-table.td>
-                        </x-table.tr>
-                    @endforeach
-                </x-table.tbody>
-            </x-table>
+                            </div>
+                        </div>
+                    </x-index.card>
+                @endforeach
+            </x-index.cards>
 
             <x-pagination :items="$accounts" />
         </x-index.container>

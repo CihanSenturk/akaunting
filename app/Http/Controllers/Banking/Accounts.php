@@ -10,12 +10,15 @@ use App\Jobs\Banking\UpdateAccount;
 use App\Models\Banking\Account;
 use App\Models\Banking\Transaction;
 use App\Models\Banking\Transfer;
+use App\Traits\Modules;
 use App\Utilities\Date;
 use App\Utilities\Reports;
 use App\Models\Setting\Currency;
 
 class Accounts extends Controller
 {
+    use Modules;
+
     /**
      * Instantiate a new controller instance.
      */
@@ -23,6 +26,7 @@ class Accounts extends Controller
     {
         parent::__construct();
 
+        $this->middleware('permission:create-banking-accounts')->only('connect');
         $this->middleware('permission:create-banking-transactions')->only('createIncome', 'createExpense');
         $this->middleware('permission:create-banking-transfers')->only('createTransfer');
         $this->middleware('permission:read-banking-accounts')->only('seePerformance');
@@ -81,6 +85,23 @@ class Accounts extends Controller
         $currency = Currency::where('code', '=', default_currency())->first();
 
         return view('banking.accounts.create', compact('currency'));
+    }
+
+    /**
+     * Where a new account begins.
+     *
+     * An account that could keep itself up to date should not be typed in by hand without the
+     * option having been seen, so the list leads here rather than straight to the form. An app
+     * that connects banks takes this page over; without one, it is where that app is offered,
+     * beside the way on to the form.
+     */
+    public function connect()
+    {
+        if ($this->moduleIsEnabled('bank-feeds') || user()?->cannot('read-modules-home')) {
+            return redirect()->route('accounts.create');
+        }
+
+        return view('banking.accounts.connect');
     }
 
     /**
@@ -189,7 +210,20 @@ class Accounts extends Controller
             $response['message'] = trans('messages.success.enabled', ['type' => $account->name]);
         }
 
-        return response()->json($response);
+        // The bulk actions ask for this in the background and are handed the outcome to
+        // read; a link on a page is followed by the browser, which has nowhere to put an
+        // answer, so it is sent back to the page it came from with the outcome flashed on it
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json($response);
+        }
+
+        if (! empty($response['success'])) {
+            flash($response['message'])->success();
+        } else {
+            flash($response['message'])->error()->important();
+        }
+
+        return redirect()->back();
     }
 
     /**
@@ -207,7 +241,20 @@ class Accounts extends Controller
             $response['message'] = trans('messages.success.disabled', ['type' => $account->name]);
         }
 
-        return response()->json($response);
+        // The bulk actions ask for this in the background and are handed the outcome to
+        // read; a link on a page is followed by the browser, which has nowhere to put an
+        // answer, so it is sent back to the page it came from with the outcome flashed on it
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json($response);
+        }
+
+        if (! empty($response['success'])) {
+            flash($response['message'])->success();
+        } else {
+            flash($response['message'])->error()->important();
+        }
+
+        return redirect()->back();
     }
 
     /**

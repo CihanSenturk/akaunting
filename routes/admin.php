@@ -126,6 +126,7 @@ Route::group(['prefix' => 'purchases'], function () {
 });
 
 Route::group(['prefix' => 'banking'], function () {
+    Route::get('accounts/connect', 'Banking\Accounts@connect')->name('accounts.connect');
     Route::get('accounts/currency', 'Banking\Accounts@currency')->name('accounts.currency');
     Route::get('accounts/{account}/create-income', 'Banking\Accounts@createIncome')->name('accounts.create-income');
     Route::get('accounts/{account}/create-expense', 'Banking\Accounts@createExpense')->name('accounts.create-expense');
