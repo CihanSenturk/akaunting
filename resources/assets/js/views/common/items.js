@@ -22,7 +22,10 @@ const app = new Vue({
     el: '#app',
 
     mixins: [
-        Global
+        Global,
+        // Mixins that modules add to this page. They register them from the "scripts" stack,
+        // which renders in <head>, so they are in place before this file runs.
+        ...((window.akaunting_mixins && window.akaunting_mixins.items) || []),
     ],
 
     data: function () {
