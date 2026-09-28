@@ -46,7 +46,14 @@
                     </x-slot>
 
                     <x-slot name="body">
-                        <x-form.group.text name="bank_name" label="{{ trans('accounts.bank_name') }}" not-required />
+                        {{-- Filled in where the page was reached from the bank search: the bank
+                             has just been named there, and asking for it again is asking twice --}}
+                        <x-form.group.text
+                            name="bank_name"
+                            label="{{ trans('accounts.bank_name') }}"
+                            value="{{ request('bank_name') }}"
+                            not-required
+                        />
 
                         <x-form.group.text name="bank_phone" label="{{ trans('accounts.bank_phone') }}" not-required />
 
