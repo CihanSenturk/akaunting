@@ -41,7 +41,11 @@ class Accounts extends Controller
     {
         $accounts = Account::withSum('income_transactions', 'amount')->withSum('expense_transactions', 'amount')->collect();
 
-        return $this->response('banking.accounts.index', compact('accounts'));
+        $create_url = $this->moduleIsEnabled('bank-feeds') && user()->can('create-bank-feeds-bank-connections')
+            ? route('bank-feeds.bank-connections.create')
+            : route('accounts.create');
+
+        return $this->response('banking.accounts.index', compact('accounts', 'create_url'));
     }
 
     /**
