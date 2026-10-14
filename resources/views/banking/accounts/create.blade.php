@@ -10,64 +10,90 @@
     ></x-slot>
 
     <x-slot name="content">
-        <x-form.container>
-            <x-form id="account" route="accounts.store">
-                <x-form.section>
-                    <x-slot name="head">
-                        <x-form.section.head title="{{ trans('general.general') }}" description="{{ trans('accounts.form_description.general') }}" />
-                    </x-slot>
+        @if (! $bank_feed_offer || request()->get('without_bank_feed', false))
+            <x-form.container>
+                <x-form id="account" route="accounts.store">
+                    <x-form.section>
+                        <x-slot name="head">
+                            <x-form.section.head title="{{ trans('general.general') }}" description="{{ trans('accounts.form_description.general') }}" />
+                        </x-slot>
 
-                    <x-slot name="body">
-                        <x-form.group.radio
-                            name="type"
-                            label="{{ trans_choice('general.types', 1) }}"
-                            :options="[
-                                'bank' => trans_choice('accounts.banks', 1),
-                                'credit_card' => trans_choice('accounts.credit_cards', 1),
-                            ]"
-                            checked="bank"
-                        />
+                        <x-slot name="body">
+                            <x-form.group.radio
+                                name="type"
+                                label="{{ trans_choice('general.types', 1) }}"
+                                :options="[
+                                    'bank' => trans_choice('accounts.banks', 1),
+                                    'credit_card' => trans_choice('accounts.credit_cards', 1),
+                                ]"
+                                checked="bank"
+                            />
 
-                        <x-form.group.text name="name" label="{{ trans('general.name') }}" form-group-class="sm:col-span-6" />
+                            <x-form.group.text name="name" label="{{ trans('general.name') }}" form-group-class="sm:col-span-6" />
 
-                        <x-form.group.text name="number" label="{{ trans('accounts.number') }}" form-group-class="sm:col-span-6" />
+                            <x-form.group.text name="number" label="{{ trans('accounts.number') }}" form-group-class="sm:col-span-6" />
 
-                        <x-form.group.currency />
+                            <x-form.group.currency />
 
-                        <x-form.group.money name="opening_balance" label="{{ trans('accounts.opening_balance') }}" value="0" :currency="$currency" dynamicCurrency="currency" />
+                            <x-form.group.money name="opening_balance" label="{{ trans('accounts.opening_balance') }}" value="0" :currency="$currency" dynamicCurrency="currency" />
 
-                        <x-form.group.toggle name="default_account" label="{{ trans('accounts.default_account') }}" :value="false" show="form.type != 'credit_card'" />
-                    </x-slot>
-                </x-form.section>
+                            <x-form.group.toggle name="default_account" label="{{ trans('accounts.default_account') }}" :value="false" show="form.type != 'credit_card'" />
+                        </x-slot>
+                    </x-form.section>
 
-                <x-form.section>
-                    <x-slot name="head">
-                        <x-form.section.head title="{{ trans_choice('accounts.banks', 1) }}" description="{{ trans('accounts.form_description.bank') }}" />
-                    </x-slot>
+                    <x-form.section>
+                        <x-slot name="head">
+                            <x-form.section.head title="{{ trans_choice('accounts.banks', 1) }}" description="{{ trans('accounts.form_description.bank') }}" />
+                        </x-slot>
 
-                    <x-slot name="body">
-                        {{-- Filled in where the page was reached from the bank search: the bank
-                             has just been named there, and asking for it again is asking twice --}}
-                        <x-form.group.text
-                            name="bank_name"
-                            label="{{ trans('accounts.bank_name') }}"
-                            value="{{ request('bank_name') }}"
-                            not-required
-                        />
+                        <x-slot name="body">
+                            {{-- Filled in where the page was reached from the bank search: the bank
+                                 has just been named there, and asking for it again is asking twice --}}
+                            <x-form.group.text
+                                name="bank_name"
+                                label="{{ trans('accounts.bank_name') }}"
+                                value="{{ request('bank_name') }}"
+                                not-required
+                            />
 
-                        <x-form.group.text name="bank_phone" label="{{ trans('accounts.bank_phone') }}" not-required />
+                            <x-form.group.text name="bank_phone" label="{{ trans('accounts.bank_phone') }}" not-required />
 
-                        <x-form.group.textarea name="bank_address" label="{{ trans('accounts.bank_address') }}" not-required />
-                    </x-slot>
-                </x-form.section>
+                            <x-form.group.textarea name="bank_address" label="{{ trans('accounts.bank_address') }}" not-required />
+                        </x-slot>
+                    </x-form.section>
 
-                <x-form.section>
-                    <x-slot name="foot">
-                        <x-form.buttons cancel-route="accounts.index" />
-                    </x-slot>
-                </x-form.section>
-            </x-form>
-        </x-form.container>
+                    <x-form.section>
+                        <x-slot name="foot">
+                            <x-form.buttons cancel-route="accounts.index" />
+                        </x-slot>
+                    </x-form.section>
+                </x-form>
+            </x-form.container>
+        @else
+            <x-empty-page
+                page="accounts"
+                group="banking"
+                image="{{ asset('public/img/empty_pages/transactions.png') }}"
+                title="{{ trans('accounts.bank_feed.title') }}"
+                description="{{ trans('accounts.bank_feed.description') }}"
+                :buttons="[
+                    [
+                        'url' => route('apps.app.show', 'bank-feeds'),
+                        'permission' => 'read-modules-home',
+                        'text' => trans('accounts.bank_feed.action'),
+                        'description' => trans('accounts.bank_feed.action_description'),
+                        'active_badge' => true,
+                    ],
+                    [
+                        'url' => route('accounts.create', ['without_bank_feed' => 1]),
+                        'permission' => 'create-banking-accounts',
+                        'text' => trans('accounts.bank_feed.add_without'),
+                        'description' => trans('accounts.bank_feed.add_without_description'),
+                        'active_badge' => false,
+                    ],
+                ]"
+            />
+        @endif
     </x-slot>
 
     @push('scripts_start')

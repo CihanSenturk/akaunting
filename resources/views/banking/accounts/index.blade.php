@@ -11,9 +11,7 @@
 
     <x-slot name="buttons">
         @can('create-banking-accounts')
-            {{-- Where a new account begins: an app that connects banks takes that page over,
-                 and without one it offers the app beside the way on to the form --}}
-            <x-link href="{{ route('accounts.connect') }}" kind="primary" id="index-more-actions-new-account">
+            <x-link href="{{ route('accounts.create') }}" kind="primary" id="index-more-actions-new-account">
                 {{ trans('general.title.new', ['type' => trans_choice('general.accounts', 1)]) }}
             </x-link>
         @endcan

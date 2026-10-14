@@ -26,7 +26,6 @@ class Accounts extends Controller
     {
         parent::__construct();
 
-        $this->middleware('permission:create-banking-accounts')->only('connect');
         $this->middleware('permission:create-banking-transactions')->only('createIncome', 'createExpense');
         $this->middleware('permission:create-banking-transfers')->only('createTransfer');
         $this->middleware('permission:read-banking-accounts')->only('seePerformance');
@@ -78,30 +77,20 @@ class Accounts extends Controller
     /**
      * Show the form for creating a new resource.
      *
+     * An account that could keep itself up to date should not be typed in by hand without the
+     * option having been seen. While the app that connects banks is missing, the page offers it
+     * in place of the form, the way an empty list offers what can be added to it, and the form
+     * is behind "add without bank feed". With the app installed, the app takes the page over.
+     *
      * @return Response
      */
     public function create()
     {
         $currency = Currency::where('code', '=', default_currency())->first();
 
-        return view('banking.accounts.create', compact('currency'));
-    }
+        $bank_feed_offer = ! $this->moduleIsEnabled('bank-feeds');
 
-    /**
-     * Where a new account begins.
-     *
-     * An account that could keep itself up to date should not be typed in by hand without the
-     * option having been seen, so the list leads here rather than straight to the form. An app
-     * that connects banks takes this page over; without one, it is where that app is offered,
-     * beside the way on to the form.
-     */
-    public function connect()
-    {
-        if ($this->moduleIsEnabled('bank-feeds') || user()?->cannot('read-modules-home')) {
-            return redirect()->route('accounts.create');
-        }
-
-        return view('banking.accounts.connect');
+        return view('banking.accounts.create', compact('currency', 'bank_feed_offer'));
     }
 
     /**
