@@ -25,7 +25,9 @@ trait Cloud
     public function getCloudBankFeedsUrl($location = 'widget')
     {
         if ($this->moduleIsEnabled('bank-feeds')) {
-            return route('bank-feeds.bank-connections.index');
+            return user()?->can('create-bank-feeds-bank-connections')
+                ? route('bank-feeds.bank-connections.create')
+                : route('accounts.index');
         }
 
         return route('apps.app.show', [
