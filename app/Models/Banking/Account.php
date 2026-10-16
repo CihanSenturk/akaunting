@@ -257,15 +257,19 @@ class Account extends Model
             ],
         ];
 
-        $actions[] = [
-            'title' => $this->enabled ? trans('general.disable') : trans('general.enable'),
-            'icon' => $this->enabled ? 'visibility_off' : 'visibility',
-            'url' => route($this->enabled ? 'accounts.disable' : 'accounts.enable', $this->id),
-            'permission' => 'update-banking-accounts',
-            'attributes' => [
-                'id' => 'index-line-actions-' . ($this->enabled ? 'disable' : 'enable') . '-account-' . $this->id,
-            ],
-        ];
+        $can_disable = $this->id != setting('default.account') && ! ($this->transactions_count ?? $this->transactions()->count());
+
+        if (! $this->enabled || $can_disable) {
+            $actions[] = [
+                'title' => $this->enabled ? trans('general.disable') : trans('general.enable'),
+                'icon' => $this->enabled ? 'visibility_off' : 'visibility',
+                'url' => route($this->enabled ? 'accounts.disable' : 'accounts.enable', $this->id),
+                'permission' => 'update-banking-accounts',
+                'attributes' => [
+                    'id' => 'index-line-actions-' . ($this->enabled ? 'disable' : 'enable') . '-account-' . $this->id,
+                ],
+            ];
+        }
 
         $actions[] = [
             'type' => 'divider',
