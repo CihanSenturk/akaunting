@@ -89,9 +89,67 @@
                         'text' => trans('accounts.bank_feed.add_without'),
                         'description' => trans('accounts.bank_feed.add_without_description'),
                         'active_badge' => false,
+                        'attributes' => ['@click.prevent' => 'onWithoutBankFeed'],
                     ],
                 ]"
             />
+
+            <akaunting-modal
+                :show="without_bank_feed.modal"
+                @cancel="closeWithoutBankFeed"
+                title="{{ trans('accounts.bank_feed.add_without') }}"
+            >
+                <template #modal-body>
+                    <div class="px-5 text-sm">
+                        <div class="p-4 rounded-lg bg-lilac-100">
+                            <p class="font-medium">
+                                {{ trans('accounts.bank_feed.manual.bank_feeds') }}
+                            </p>
+
+                            <ul class="mt-2 space-y-1">
+                                @foreach (['sync', 'match', 'reconcile'] as $benefit)
+                                    <li class="flex items-start">
+                                        <span class="material-icons text-base text-green ltr:mr-2 rtl:ml-2">check</span>
+                                        {{ trans('accounts.bank_feed.benefits.' . $benefit) }}
+                                    </li>
+                                @endforeach
+                            </ul>
+
+                            @can('read-modules-home')
+                                <x-link href="{{ route('apps.app.show', 'bank-feeds') }}" class="inline-block mt-3 font-medium text-purple hover:underline" override="class">
+                                    {{ trans('accounts.bank_feed.action') }}
+                                </x-link>
+                            @endcan
+                        </div>
+
+                        <p class="mt-4">
+                            {{ trans('accounts.bank_feed.manual.reasons') }}
+                        </p>
+
+                        <ul class="mt-2 ltr:pl-5 rtl:pr-5 list-disc space-y-1">
+                            @foreach (['not_supported', 'cash', 'manual'] as $reason)
+                                <li>{{ trans('accounts.bank_feed.manual.reason.' . $reason) }}</li>
+                            @endforeach
+                        </ul>
+
+                        <p class="mt-4">
+                            {{ trans('accounts.bank_feed.manual.import') }}
+                        </p>
+                    </div>
+                </template>
+
+                <template #card-footer>
+                    <div class="flex items-center justify-end space-x-2 rtl:space-x-reverse">
+                        <button type="button" class="px-6 py-1.5 hover:bg-gray-200 rounded-lg" @click="closeWithoutBankFeed">
+                            {{ trans('general.cancel') }}
+                        </button>
+
+                        <x-link href="{{ route('accounts.create', ['without_bank_feed' => 1]) }}" class="px-6 py-1.5 bg-green hover:bg-green-700 text-white rounded-lg" override="class">
+                            {{ trans('accounts.bank_feed.manual.continue') }}
+                        </x-link>
+                    </div>
+                </template>
+            </akaunting-modal>
         @endif
     </x-slot>
 

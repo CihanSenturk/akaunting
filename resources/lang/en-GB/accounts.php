@@ -32,6 +32,19 @@ return [
             'match'         => 'Imported transactions are matched to your invoices, bills and existing records.',
             'reconcile'     => 'Bank reconciliation is faster, with fewer missing or duplicate entries.',
         ],
+
+        'manual' => [
+            'bank_feeds'    => 'Bank Feeds can keep this account up to date for you:',
+            'reasons'       => 'You may want to add the account manually if:',
+            'import'        => 'You can still import the account\'s transactions from a file at any time.',
+            'continue'      => 'Continue',
+
+            'reason' => [
+                'not_supported' => 'Your bank is not available in Bank Feeds yet.',
+                'cash'          => 'It is a cash or petty cash account.',
+                'manual'        => 'You prefer to record the transactions yourself.',
+            ],
+        ],
     ],
 
     'form_description' => [
