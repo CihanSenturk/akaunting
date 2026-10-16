@@ -258,16 +258,6 @@ class Account extends Model
         ];
 
         $actions[] = [
-            'title' => trans('general.duplicate'),
-            'icon' => 'file_copy',
-            'url' => route('accounts.duplicate', $this->id),
-            'permission' => 'create-banking-accounts',
-            'attributes' => [
-                'id' => 'index-line-actions-duplicate-account-' . $this->id,
-            ],
-        ];
-
-        $actions[] = [
             'title' => $this->enabled ? trans('general.disable') : trans('general.enable'),
             'icon' => $this->enabled ? 'visibility_off' : 'visibility',
             'url' => route($this->enabled ? 'accounts.disable' : 'accounts.enable', $this->id),
