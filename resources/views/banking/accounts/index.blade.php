@@ -82,7 +82,7 @@
                                 {{ trans('accounts.current_balance') }}
                             </div>
 
-                            <div class="text-lg font-bold">
+                            <div @class(['text-lg font-bold', 'text-green' => $item->balance > 0, 'text-red' => $item->balance < 0])>
                                 <x-money :amount="$item->balance" :currency="$item->currency_code" />
                             </div>
                         </div>
