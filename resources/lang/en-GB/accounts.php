@@ -19,18 +19,18 @@ return [
     'credit_cards'          => 'Credit Card|Credit Cards',
 
     'bank_feed' => [
-        'title'             => 'Connect Your Bank',
-        'description'       => 'Connect your bank to Akaunting and let your transactions come in on their own, day after day, instead of being typed in one by one.',
+        'title'             => 'Connect Your Bank Account',
+        'description'       => 'Import your bank transactions into Akaunting automatically every day. Reduce manual data entry, match payments to your invoices and bills, and reconcile your account with your bank statement in less time.',
         'action'            => 'Get Bank Feeds',
-        'add_without'       => 'Add without bank feed',
+        'add_without'       => 'Add Account Manually',
 
-        'action_description'        => 'Connect your bank and let the transactions come in on their own.',
-        'add_without_description'   => 'Enter the account by hand and keep its transactions up to date yourself.',
+        'action_description'        => 'Connect through a secure, read-only bank connection and import transactions automatically.',
+        'add_without_description'   => 'Create the account without a bank connection and record its transactions manually. Suitable for cash accounts and banks that are not supported.',
 
         'benefits' => [
-            'sync'          => 'Your bank transactions are fetched and kept up to date automatically.',
-            'match'         => 'Incoming transactions are matched with your invoices and bills.',
-            'reconcile'     => 'Your balance always follows your bank, so reconciliation takes minutes.',
+            'sync'          => 'Bank transactions are imported automatically every day.',
+            'match'         => 'Imported transactions are matched to your invoices, bills and existing records.',
+            'reconcile'     => 'Bank reconciliation is faster, with fewer missing or duplicate entries.',
         ],
     ],
 
