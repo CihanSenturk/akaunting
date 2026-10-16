@@ -73,7 +73,6 @@
             <x-empty-page
                 page="accounts"
                 group="banking"
-                image="{{ asset('public/img/empty_pages/transactions.png') }}"
                 title="{{ trans('accounts.bank_feed.title') }}"
                 description="{{ trans('accounts.bank_feed.description') }}"
                 :buttons="[
