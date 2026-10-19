@@ -102,6 +102,13 @@
         <x-show.container>
             <x-show.summary>
                 <x-show.summary.left>
+                    <x-slot name="avatar">
+                        @stack('avatar_input_start')
+                        @stack('avatar_input_end')
+                    </x-slot>
+
+                    @stack('profile_input_start')
+                    @stack('profile_input_end')
                 </x-show.summary.left>
 
                 <x-show.summary.right>
