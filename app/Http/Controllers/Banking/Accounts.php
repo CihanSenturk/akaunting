@@ -10,14 +10,14 @@ use App\Jobs\Banking\UpdateAccount;
 use App\Models\Banking\Account;
 use App\Models\Banking\Transaction;
 use App\Models\Banking\Transfer;
+use App\Traits\DateTime;
 use App\Traits\Modules;
-use App\Utilities\Date;
 use App\Utilities\Reports;
 use App\Models\Setting\Currency;
 
 class Accounts extends Controller
 {
-    use Modules;
+    use DateTime, Modules;
 
     /**
      * Instantiate a new controller instance.
@@ -282,7 +282,6 @@ class Accounts extends Controller
     public function seePerformance(Account $account)
     {
         $data = [
-            'year'          => Date::now()->year,
             'basis'         => 'accrual',
             'account_id'    => $account->id,
         ];
@@ -297,7 +296,13 @@ class Accounts extends Controller
             return redirect()->route('reports.create');
         }
 
-        return redirect()->route('reports.show', $report->model->id)->withInput($data);
+        $financial_year = $this->getFinancialYear();
+
+        return redirect()->route('reports.show', [
+            $report->model->id,
+            'start_date'    => $financial_year->copy()->getStartDate()->toDateString(),
+            'end_date'      => $financial_year->copy()->getEndDate()->toDateString(),
+        ])->withInput($data);
     }
 
     public function currency()
