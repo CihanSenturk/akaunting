@@ -23,18 +23,15 @@ class Accounts extends Component
      */
     public $overview = null;
 
-    public $reconciliation_range = null;
-    
     public function __construct(
         $accounts = null,
         array $groups = [],
-        ?array $overview = null,
-        $reconciliation_range = null
+        ?array $overview = null
     ) {
         $this->accounts = $accounts;
         $this->groups = $this->getGroups($groups);
+        $this->overview = $overview;
         $this->overview = $this->getOverview();
-        $this->reconciliation_range = $this->getReconciliationRange();
     }
 
     /**
@@ -103,10 +100,5 @@ class Accounts extends Component
         }
 
         return $overview;
-    }
-
-    public function getReconciliationRange(): ?array
-    {
-        return (new AccountOverview())->getReconciliationRange();
     }
 }

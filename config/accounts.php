@@ -7,18 +7,18 @@ return [
     | Reconciliation on the account list
     |--------------------------------------------------------------------------
     |
-    | The list counts the transactions of each account that are still waiting to be
-    | reconciled and offers to reconcile them. Only a fixed number of days is looked at,
-    | so an account that has never been reconciled is not answered with every
-    | transaction it ever had. Turning it off takes the counter and the button away.
+    | The card of an account kept by hand counts what is still waiting to be reconciled
+    | since the account's last reconciliation (everything, on one never reconciled) and
+    | offers to reconcile it, a month at a time, or to carry on with a draft. Turning it
+    | off takes everything about reconciling off the card: the button, the count and the
+    | last statement. An account kept up to date by an app (bank feeds) shows that app's
+    | own actions instead and is not affected.
     |
     */
 
     'reconciliation' => [
 
         'enabled'   => env('ACCOUNTS_RECONCILIATION_ENABLED', true),
-
-        'days'      => env('ACCOUNTS_RECONCILIATION_DAYS', 30),
 
     ],
 

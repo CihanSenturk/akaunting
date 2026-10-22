@@ -19,7 +19,6 @@
                 <x-accounts.index.account
                     :account="$item"
                     :overview="$overview[$item->id] ?? []"
-                    :reconciliation-range="$reconciliation_range"
                 />
             @endforeach
 

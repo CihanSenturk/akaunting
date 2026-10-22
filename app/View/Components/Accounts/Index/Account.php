@@ -33,14 +33,16 @@ class Account extends Component
     /** @var array */
     public $history;
 
-    /** @var int|null */
-    public $unreconciled;
-
     /** @var array|null */
     public $statement;
 
-    /** @var array|null */
-    public $reconciliationRange;
+    /**
+     * What is waiting to be reconciled and the reconciliation that takes it on, or null while
+     * reconciling is turned off (AccountOverview::getReconciliation()).
+     *
+     * @var array|null
+     */
+    public $reconciliation;
 
     /** @var bool */
     public $isOverdrawn;
@@ -61,16 +63,14 @@ class Account extends Component
      */
     public function __construct(
         $account,
-        array $overview = [],
-        ?array $reconciliationRange = null
+        array $overview = []
     ) {
         $this->account = $account;
         $this->isDefault = setting('default.account') == $account->id;
 
         $this->history = $overview['balance_history'] ?? [];
-        $this->unreconciled = $overview['unreconciled'] ?? null;
         $this->statement = $overview['statement'] ?? null;
-        $this->reconciliationRange = $reconciliationRange;
+        $this->reconciliation = $overview['reconciliation'] ?? null;
 
         // A credit card is meant to be owed on, so a balance below zero is how it normally
         // stands and is not drawn as a warning the way an overdrawn bank account is

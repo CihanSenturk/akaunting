@@ -21,7 +21,7 @@ class AccountOverview
     /**
      * The figures of each account, keyed by its id.
      *
-     * @return array<int, array{balance_history: array, unreconciled: int|null, statement: array|null}>
+     * @return array<int, array{balance_history: array, statement: array|null, reconciliation: array|null}>
      */
     public function get(Collection $accounts): array
     {
@@ -36,18 +36,28 @@ class AccountOverview
         $start = $today->copy()->subDays($days - 1);
 
         $movements = $this->getDailyMovements($ids, $start);
-        $statements = $this->getStatements($ids);
 
-        $reconciliation = $this->getReconciliationRange();
-        $unreconciled = $reconciliation ? $this->getUnreconciledCounts($ids, $reconciliation['started_at'], $reconciliation['ended_at']) : [];
+        // Turned off, nothing about reconciling is read or shown, the last statement included
+        $enabled = $this->isReconciliationEnabled();
+
+        $reconciliations = $enabled ? $this->getReconciliations($ids) : collect();
+        $statements = $this->getStatements($reconciliations);
+        $unreconciled = $enabled ? $this->getUnreconciledDays($ids, $today) : [];
 
         $overview = [];
 
         foreach ($accounts as $account) {
+            $last_ended_at = $statements[$account->id]['date'] ?? null;
+
             $overview[$account->id] = [
                 'balance_history'   => $this->getBalanceHistory((float) $account->balance, $movements[$account->id] ?? [], $start, $days, $today),
-                'unreconciled'      => $reconciliation ? (int) ($unreconciled[$account->id] ?? 0) : null,
                 'statement'         => $statements[$account->id] ?? null,
+                'reconciliation'    => $enabled ? $this->getReconciliation(
+                    $unreconciled[$account->id] ?? [],
+                    $last_ended_at,
+                    $this->getDraft($reconciliations, $account->id, $last_ended_at),
+                    $today
+                ) : null,
             ];
         }
 
@@ -66,27 +76,77 @@ class AccountOverview
             ->sum(fn ($account) => $this->convertToDefault((float) $account->balance, $account->currency_code, $account->currency->rate ?? 1));
     }
 
-    /**
-     * The days the reconciliation counter looks at, or null while it is turned off.
-     *
-     * A fixed window rather than everything since the last reconciliation: an account that was
-     * never reconciled would otherwise ask for every transaction it ever had.
-     *
-     * @return array{started_at: Date, ended_at: Date}|null
-     */
-    public function getReconciliationRange(): ?array
+    public function isReconciliationEnabled(): bool
     {
-        if (! config('accounts.reconciliation.enabled', true)) {
-            return null;
+        return (bool) config('accounts.reconciliation.enabled', true);
+    }
+
+    /**
+     * What is waiting to be reconciled on an account, and the reconciliation that takes it on.
+     *
+     * Read from the account's own reconciliations rather than a fixed number of days: what is
+     * waiting is everything dated after the last one that was finished, up to today, or, on an
+     * account never reconciled, everything not reconciled yet. A reconciliation left as a draft
+     * is the one to carry on with. Otherwise a new one starts the day after the last, or on the
+     * first day waiting, and covers a month at most, so a long gap is taken a statement at a
+     * time, the way the bank sends them. What is still not reconciled on or before the last
+     * reconciliation was added to a period already closed: it is counted apart, since taking it
+     * into the next one would reopen that period.
+     *
+     * @param  array<string, int>  $days  How many transactions are not reconciled on each day, keyed by Y-m-d.
+     * @param  mixed  $last_ended_at  The end of the last finished reconciliation, if any.
+     * @param  object|null  $draft  The reconciliation left as a draft, if any.
+     * @return array{count: int, earlier: int, started_at: Date|null, ended_at: Date|null, draft_id: int|null}
+     */
+    public function getReconciliation(array $days, $last_ended_at, $draft, Date $today): array
+    {
+        $last_day = $last_ended_at ? Date::parse($last_ended_at)->toDateString() : null;
+
+        $earlier = 0;
+        $waiting = [];
+
+        foreach ($days as $day => $count) {
+            if ($last_day && $day <= $last_day) {
+                $earlier += $count;
+            } else {
+                $waiting[$day] = $count;
+            }
         }
 
-        $days = max(1, (int) config('accounts.reconciliation.days', 30));
+        ksort($waiting);
 
-        $today = Date::today();
+        $started_at = $ended_at = null;
+
+        if ($draft) {
+            $started_at = Date::parse($draft->started_at)->startOfDay();
+            $ended_at = Date::parse($draft->ended_at)->startOfDay();
+        } else {
+            if ($last_day) {
+                $started_at = Date::parse($last_day)->addDay();
+            } elseif (! empty($waiting)) {
+                $started_at = Date::parse(array_key_first($waiting));
+            }
+
+            // Reconciled up to today already: the next statement has not begun
+            if ($started_at && $started_at->greaterThan($today)) {
+                $started_at = null;
+            }
+
+            if ($started_at) {
+                $ended_at = $started_at->copy()->addMonthNoOverflow()->subDay();
+
+                if ($ended_at->greaterThan($today)) {
+                    $ended_at = $today->copy();
+                }
+            }
+        }
 
         return [
-            'started_at'    => $today->copy()->subDays($days - 1),
-            'ended_at'      => $today,
+            'count'         => array_sum($waiting),
+            'earlier'       => $earlier,
+            'started_at'    => $started_at,
+            'ended_at'      => $ended_at,
+            'draft_id'      => $draft->id ?? null,
         ];
     }
 
@@ -161,18 +221,27 @@ class AccountOverview
     }
 
     /**
+     * Every reconciliation of the accounts, latest first, read once for the last statements and
+     * the drafts alike.
+     */
+    protected function getReconciliations(array $ids): Collection
+    {
+        return Reconciliation::query()
+            ->whereIn('account_id', $ids)
+            ->orderByDesc('ended_at')
+            ->get(['id', 'account_id', 'started_at', 'ended_at', 'closing_balance', 'reconciled']);
+    }
+
+    /**
      * The closing balance of the last reconciliation that was finished, as the latest
      * statement the company checked each account against.
      *
      * @return array<int, array{balance: float, date: mixed}>
      */
-    protected function getStatements(array $ids): array
+    protected function getStatements(Collection $reconciliations): array
     {
-        return Reconciliation::query()
-            ->whereIn('account_id', $ids)
+        return $reconciliations
             ->where('reconciled', 1)
-            ->orderByDesc('ended_at')
-            ->get(['account_id', 'ended_at', 'closing_balance'])
             ->unique('account_id')
             ->mapWithKeys(fn ($reconciliation) => [
                 $reconciliation->account_id => [
@@ -184,20 +253,47 @@ class AccountOverview
     }
 
     /**
-     * @return array<int, int>
+     * The latest reconciliation of the account left as a draft, unless one finished since has
+     * gone past it.
      */
-    protected function getUnreconciledCounts(array $ids, Date $started_at, Date $ended_at): array
+    protected function getDraft(Collection $reconciliations, int $account_id, $last_ended_at)
     {
-        return Transaction::query()
+        $draft = $reconciliations
+            ->where('account_id', $account_id)
+            ->where('reconciled', 0)
+            ->first();
+
+        if (! $draft || ($last_ended_at && Date::parse($draft->ended_at)->lessThanOrEqualTo(Date::parse($last_ended_at)))) {
+            return null;
+        }
+
+        return $draft;
+    }
+
+    /**
+     * How many transactions of each account are not reconciled yet, by day, up to today: one
+     * dated later cannot be on a bank statement yet.
+     *
+     * @return array<int, array<string, int>>
+     */
+    protected function getUnreconciledDays(array $ids, Date $today): array
+    {
+        $rows = Transaction::query()
             ->whereIn('account_id', $ids)
             ->whereIn('type', array_merge($this->getIncomeTypes(), $this->getExpenseTypes()))
             ->where('reconciled', 0)
-            ->whereBetween('paid_at', [$started_at->copy()->startOfDay(), $ended_at->copy()->endOfDay()])
-            ->selectRaw('account_id, COUNT(*) as total')
-            ->groupBy('account_id')
+            ->where('paid_at', '<=', $today->copy()->endOfDay())
+            ->selectRaw('account_id, DATE(paid_at) as day, COUNT(*) as total')
+            ->groupBy('account_id', 'day')
             ->toBase()
-            ->pluck('total', 'account_id')
-            ->map(fn ($total) => (int) $total)
-            ->all();
+            ->get();
+
+        $days = [];
+
+        foreach ($rows as $row) {
+            $days[$row->account_id][substr((string) $row->day, 0, 10)] = (int) $row->total;
+        }
+
+        return $days;
     }
 }

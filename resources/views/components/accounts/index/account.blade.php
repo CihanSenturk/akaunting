@@ -68,43 +68,74 @@
     </x-slot>
 
     <div class="flex flex-col gap-4 min-w-0">
-        @php($status = trim($__env->yieldPushContent('account_card_status_' . $account->id)))
+        {{-- An app that keeps the account up to date (bank feeds) has three places of its own:
+             the card's one green button, links beside it and a line under them about itself --}}
+        @php
+            $app_primary = trim($__env->yieldPushContent('account_card_primary_' . $account->id));
+            $app_links = trim($__env->yieldPushContent('account_card_links_' . $account->id));
+            $app_status = trim($__env->yieldPushContent('account_card_status_' . $account->id));
 
-        {{-- What the account is waiting on. An app that keeps the account up to date says so
-             itself, in place of what is shown for an account that is kept by hand --}}
-        @if ($status !== '')
-            {!! $status !!}
-        @else
-            {{-- An account kept by hand can always take another statement, so the import sits
-                 beside whatever else the account is waiting on --}}
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 leading-none">
-                @if ($unreconciled)
-                    @can('create-banking-reconciliations')
-                        <x-link
-                            href="{{ route('reconciliations.create', [
-                                'account_id'    => $account->id,
-                                'started_at'    => $reconciliationRange['started_at']->toDateString(),
-                                'ended_at'      => $reconciliationRange['ended_at']->toDateString(),
-                            ]) }}"
-                            class="relative pointer-events-auto px-3 py-1.5 rounded-xl text-sm font-medium leading-6 bg-green hover:bg-green-700 text-white"
-                            override="class"
-                            id="index-account-reconcile-{{ $account->id }}"
-                        >
-                            {{ trans_choice('accounts.reconcile_items', $unreconciled, ['count' => $unreconciled]) }}
-                        </x-link>
-                    @else
-                        <span class="text-sm font-medium text-orange">
-                            {{ trans_choice('accounts.reconcile_items', $unreconciled, ['count' => $unreconciled]) }}
-                        </span>
-                    @endif
-                @elseif (! empty($statement))
-                    <span class="flex items-center text-sm font-medium leading-none text-green">
-                        <span class="material-icons-outlined text-lg leading-none ltr:mr-1 rtl:ml-1" aria-hidden="true">check_circle</span>
+            // What the account is waiting on is the one green button; once an app has taken it,
+            // reconciling is offered as a link, as everything else beside it is
+            $reconcile_class = $app_primary === ''
+                ? 'relative pointer-events-auto px-3 py-1.5 rounded-xl text-sm font-medium leading-6 bg-green hover:bg-green-700 text-white'
+                : 'relative pointer-events-auto text-sm font-medium leading-none text-purple hover:underline';
+        @endphp
 
-                        {{ trans('reconciliations.reconciled') }}
+        {{-- Reconciling stays on every card: an account an app keeps up to date can have
+             transactions entered by hand as well --}}
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 leading-none">
+            {!! $app_primary !!}
+
+            {{-- A reconciliation left as a draft is carried on with rather than started again
+                 beside it, which would cover the same days twice --}}
+            @if (! empty($reconciliation['draft_id']))
+                @can('update-banking-reconciliations')
+                    <x-link
+                        href="{{ route('reconciliations.edit', $reconciliation['draft_id']) }}"
+                        class="{{ $reconcile_class }}"
+                        override="class"
+                        id="index-account-continue-reconciliation-{{ $account->id }}"
+                    >
+                        {{ trans('accounts.continue_reconciliation') }}
+                    </x-link>
+                @else
+                    <span class="text-sm font-medium text-orange">
+                        {{ trans('reconciliations.in_progress') }}
                     </span>
-                @endif
+                @endcan
+            @elseif (! empty($reconciliation['count']) && ! empty($reconciliation['started_at']))
+                @can('create-banking-reconciliations')
+                    <x-link
+                        href="{{ route('reconciliations.create', [
+                            'account_id'    => $account->id,
+                            'started_at'    => $reconciliation['started_at']->toDateString(),
+                            'ended_at'      => $reconciliation['ended_at']->toDateString(),
+                        ]) }}"
+                        class="{{ $reconcile_class }}"
+                        override="class"
+                        id="index-account-reconcile-{{ $account->id }}"
+                    >
+                        {{ trans_choice('accounts.reconcile_items', $reconciliation['count'], ['count' => $reconciliation['count']]) }}
+                    </x-link>
+                @else
+                    <span class="text-sm font-medium text-orange">
+                        {{ trans_choice('accounts.reconcile_items', $reconciliation['count'], ['count' => $reconciliation['count']]) }}
+                    </span>
+                @endcan
+            @elseif (! empty($statement))
+                <span class="flex items-center text-sm font-medium leading-none text-green">
+                    <span class="material-icons-outlined text-lg leading-none ltr:mr-1 rtl:ml-1" aria-hidden="true">check_circle</span>
 
+                    {{ trans('reconciliations.reconciled') }}
+                </span>
+            @endif
+
+            {!! $app_links !!}
+
+            {{-- An account an app keeps up to date gets its transactions from it, so a
+                 statement imported beside them would add each one twice --}}
+            @if ($app_status === '')
                 @can('create-banking-transactions')
                     <x-link
                         href="{{ route('accounts.import-transactions', $account->id) }}"
@@ -115,8 +146,30 @@
                         {{ trans('accounts.import_statement') }}
                     </x-link>
                 @endcan
-            </div>
-        @endif
+            @endif
+
+            {{-- Added to a period already reconciled: said apart, since the next
+                 reconciliation does not reach back to it --}}
+            @if (! empty($reconciliation['earlier']))
+                <x-tooltip
+                    id="tooltip-account-earlier-{{ $account->id }}"
+                    message="{{ trans('accounts.earlier_unreconciled_description', ['date' => company_date($statement['date'])]) }}"
+                    placement="top"
+                    size="w-64"
+                >
+                    <span
+                        id="index-account-earlier-{{ $account->id }}"
+                        class="relative pointer-events-auto inline-flex items-center gap-1 text-sm font-medium leading-none text-orange cursor-default"
+                    >
+                        <span class="material-icons-outlined text-base leading-none" aria-hidden="true">history</span>
+
+                        {{ trans_choice('accounts.earlier_unreconciled', $reconciliation['earlier'], ['count' => $reconciliation['earlier']]) }}
+                    </span>
+                </x-tooltip>
+            @endif
+        </div>
+
+        {!! $app_status !!}
 
         <dl class="grid grid-cols-2 gap-y-1 text-sm">
             <dt class="text-black-400">

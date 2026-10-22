@@ -64,6 +64,61 @@ class AccountOverviewTest extends TestCase
         $this->assertSame([100.0, 100.0, 100.0, 100.0, 100.0], $history);
     }
 
+    public function testItShouldTakeALongGapAMonthAtATime(): void
+    {
+        $reconciliation = $this->reconciliation(['2026-03-05' => 2, '2026-10-16' => 1], null);
+
+        $this->assertSame(3, $reconciliation['count']);
+        $this->assertSame('2026-03-05', $reconciliation['started_at']->toDateString());
+        $this->assertSame('2026-04-04', $reconciliation['ended_at']->toDateString());
+    }
+
+    public function testItShouldStartTheDayAfterTheLastReconciliation(): void
+    {
+        $reconciliation = $this->reconciliation(['2026-10-01' => 1, '2026-10-12' => 2], '2026-09-30 23:59:59');
+
+        $this->assertSame(3, $reconciliation['count']);
+        $this->assertSame(0, $reconciliation['earlier']);
+        $this->assertSame('2026-10-01', $reconciliation['started_at']->toDateString());
+        $this->assertSame('2026-10-17', $reconciliation['ended_at']->toDateString());
+    }
+
+    public function testItShouldCountApartWhatIsDatedInAReconciledPeriod(): void
+    {
+        $reconciliation = $this->reconciliation(['2026-09-30' => 1, '2026-09-12' => 1, '2026-10-02' => 1], '2026-09-30 23:59:59');
+
+        $this->assertSame(1, $reconciliation['count']);
+        $this->assertSame(2, $reconciliation['earlier']);
+    }
+
+    public function testItShouldCarryOnWithTheDraftsDays(): void
+    {
+        $draft = (object) ['id' => 7, 'started_at' => '2026-10-01 00:00:00', 'ended_at' => '2026-10-31 23:59:59'];
+
+        $reconciliation = $this->reconciliation(['2026-10-05' => 1], '2026-09-30 23:59:59', $draft);
+
+        $this->assertSame(7, $reconciliation['draft_id']);
+        $this->assertSame('2026-10-01', $reconciliation['started_at']->toDateString());
+        $this->assertSame('2026-10-31', $reconciliation['ended_at']->toDateString());
+    }
+
+    public function testItShouldOfferNoRangeOnceReconciledUpToToday(): void
+    {
+        $reconciliation = $this->reconciliation([], '2026-10-17 23:59:59');
+
+        $this->assertSame(0, $reconciliation['count']);
+        $this->assertNull($reconciliation['started_at']);
+        $this->assertNull($reconciliation['ended_at']);
+    }
+
+    /**
+     * As on 17 October 2026.
+     */
+    private function reconciliation(array $days, $last_ended_at, $draft = null): array
+    {
+        return (new AccountOverview())->getReconciliation($days, $last_ended_at, $draft, Date::parse('2026-10-17'));
+    }
+
     /**
      * Five days, 13 to 17 October 2026.
      */

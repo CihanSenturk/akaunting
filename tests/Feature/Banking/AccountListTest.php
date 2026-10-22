@@ -46,20 +46,119 @@ class AccountListTest extends FeatureTestCase
             ->assertSeeText(trans_choice('accounts.reconcile_items', 2, ['count' => 2]));
     }
 
-    public function testItShouldNotCountWhatIsOutsideTheWindow()
+    public function testItShouldCountEverythingOnAnAccountNeverReconciled()
     {
         $this->loginAs();
 
         $account = Account::factory()->enabled()->default_currency()->create(['type' => 'bank']);
 
-        $this->createTransaction($account, [
-            'reconciled'    => 0,
-            'paid_at'       => Date::today()->subDays(config('accounts.reconciliation.days') + 5)->toDateTimeString(),
-        ]);
+        $first = Date::today()->subMonths(3);
+
+        $this->createTransaction($account, ['reconciled' => 0, 'paid_at' => $first->toDateTimeString()]);
+        $this->createTransaction($account, ['reconciled' => 0, 'paid_at' => Date::today()->subDays(2)->toDateTimeString()]);
+
+        // Every one is counted, and the reconciliation offered takes the first month of them
+        $this->get(route('accounts.index'))
+            ->assertStatus(200)
+            ->assertSeeText(trans_choice('accounts.reconcile_items', 2, ['count' => 2]))
+            ->assertSee(e(route('reconciliations.create', [
+                'account_id'    => $account->id,
+                'started_at'    => $first->toDateString(),
+                'ended_at'      => $first->copy()->addMonthNoOverflow()->subDay()->toDateString(),
+            ])), false);
+    }
+
+    public function testItShouldCountWhatCameAfterTheLastReconciliation()
+    {
+        $this->loginAs();
+
+        $account = Account::factory()->enabled()->default_currency()->create(['type' => 'bank']);
+
+        $last = Date::today()->subDays(10);
+
+        $this->reconcile($account, $last->copy()->subMonth(), $last);
+
+        $this->createTransaction($account, ['reconciled' => 0, 'paid_at' => Date::today()->subDays(5)->toDateTimeString()]);
+
+        // Dated after today: not on any statement yet
+        $this->createTransaction($account, ['reconciled' => 0, 'paid_at' => Date::today()->addDays(3)->toDateTimeString()]);
 
         $this->get(route('accounts.index'))
             ->assertStatus(200)
+            ->assertSeeText(trans_choice('accounts.reconcile_items', 1, ['count' => 1]))
+            ->assertSee(e(route('reconciliations.create', [
+                'account_id'    => $account->id,
+                'started_at'    => $last->copy()->addDay()->toDateString(),
+                'ended_at'      => Date::today()->toDateString(),
+            ])), false)
+            ->assertDontSee('index-account-earlier-' . $account->id, false);
+    }
+
+    public function testItShouldSayApartWhatWasAddedToAReconciledPeriod()
+    {
+        $this->loginAs();
+
+        $account = Account::factory()->enabled()->default_currency()->create(['type' => 'bank']);
+
+        $last = Date::today()->subDays(10);
+
+        $this->reconcile($account, $last->copy()->subMonth(), $last);
+
+        $this->createTransaction($account, ['reconciled' => 0, 'paid_at' => $last->copy()->subDays(3)->toDateTimeString()]);
+
+        // Nothing waits after the last reconciliation, so it reads as reconciled, with the
+        // transaction left behind said beside it
+        $this->get(route('accounts.index'))
+            ->assertStatus(200)
+            ->assertDontSee('index-account-reconcile-' . $account->id, false)
+            ->assertSeeText(trans('reconciliations.reconciled'))
+            ->assertSee('index-account-earlier-' . $account->id, false)
+            ->assertSeeText(trans_choice('accounts.earlier_unreconciled', 1, ['count' => 1]));
+    }
+
+    public function testItShouldCarryOnWithADraft()
+    {
+        $this->loginAs();
+
+        $account = Account::factory()->enabled()->default_currency()->create(['type' => 'bank']);
+
+        $this->createTransaction($account, ['reconciled' => 0]);
+
+        $draft = $this->reconcile($account, Date::today()->subDays(5), Date::today(), 0);
+
+        $this->get(route('accounts.index'))
+            ->assertStatus(200)
+            ->assertSee(route('reconciliations.edit', $draft->id), false)
+            ->assertSee('index-account-continue-reconciliation-' . $account->id, false)
             ->assertDontSee('index-account-reconcile-' . $account->id, false);
+    }
+
+    public function testItShouldOfferNothingOnceReconciledUpToToday()
+    {
+        $this->loginAs();
+
+        $account = Account::factory()->enabled()->default_currency()->create(['type' => 'bank']);
+
+        $this->reconcile($account, Date::today()->subMonth(), Date::today());
+
+        $this->get(route('accounts.index'))
+            ->assertStatus(200)
+            ->assertDontSee('index-account-reconcile-' . $account->id, false)
+            ->assertSeeText(trans('reconciliations.reconciled'));
+    }
+
+    public function testItShouldDrawTheBalanceOverTheDaysSet()
+    {
+        config(['accounts.balance_history_days' => 7]);
+
+        $this->loginAs();
+
+        Account::factory()->enabled()->default_currency()->create(['type' => 'bank']);
+
+        $this->get(route('accounts.index'))
+            ->assertStatus(200)
+            ->assertSeeText(trans('accounts.balance_history', ['days' => 7]))
+            ->assertDontSeeText(trans('accounts.balance_history', ['days' => 30]));
     }
 
     public function testItShouldShowTheLastStatementOfAReconciledAccount()
@@ -97,20 +196,22 @@ class AccountListTest extends FeatureTestCase
             ->assertSee(route('accounts.import-transactions', $account->id), false);
     }
 
-    public function testItShouldLeaveTheCounterOutWhileItIsTurnedOff()
+    public function testItShouldLeaveReconcilingOutWhileItIsTurnedOff()
     {
         config(['accounts.reconciliation.enabled' => false]);
 
         $this->loginAs();
 
         $account = Account::factory()->enabled()->default_currency()->create();
+        $reconciled = Account::factory()->enabled()->default_currency()->create();
 
         $this->createTransaction($account, ['reconciled' => 0]);
+        $this->reconcile($reconciled, Date::today()->subMonth(), Date::today()->subDays(5));
 
         $this->get(route('accounts.index'))
             ->assertStatus(200)
             ->assertDontSee('index-account-reconcile-' . $account->id, false)
-            ->assertDontSeeText(trans('accounts.to_reconcile', ['days' => config('accounts.reconciliation.days')]));
+            ->assertDontSeeText(trans('reconciliations.reconciled'));
     }
 
     public function testItShouldReadTheOverviewWithTheSameQueriesForAnyNumberOfAccounts()
@@ -129,17 +230,31 @@ class AccountListTest extends FeatureTestCase
 
         $account = Account::factory()->enabled()->create();
 
+        // Handed over as old input, the way the account's other shortcuts hand theirs
         $this->get(route('accounts.import-transactions', $account->id))
-            ->assertRedirect(route('import.create', [
-                'group'         => 'banking',
-                'type'          => 'transactions',
-                'account_id'    => $account->id,
-            ]));
+            ->assertRedirect(route('import.create', ['group' => 'banking', 'type' => 'transactions']))
+            ->assertSessionHasInput('account_id', $account->id);
 
-        $this->get(route('import.create', ['group' => 'banking', 'type' => 'transactions', 'account_id' => $account->id]))
+        $this->get(route('import.create', ['group' => 'banking', 'type' => 'transactions']))
             ->assertStatus(200)
             ->assertSee($account->name)
             ->assertSee('name="account_id"', false);
+    }
+
+    public function testItShouldKeepTheAccountWhenTheImportFails()
+    {
+        $this->loginAs();
+
+        $account = Account::factory()->enabled()->create();
+
+        // A file with a sheet the import does not know is turned away before any row is read
+        $this->post(route('transactions.import'), [
+            'account_id'    => $account->id,
+            'import'        => UploadedFile::fake()->createWithContent('items.xlsx', File::get(public_path('files/import/items.xlsx'))),
+        ])
+            ->assertStatus(200)
+            ->assertJson(['redirect' => route('import.create', ['banking', 'transactions'])])
+            ->assertSessionHasInput('account_id', $account->id);
     }
 
     public function testItShouldImportIntoTheAccountItWasStartedFrom()
@@ -190,6 +305,19 @@ class AccountListTest extends FeatureTestCase
             'currency_code' => $account->currency_code,
             'paid_at'       => Date::today()->toDateTimeString(),
         ], $attributes));
+    }
+
+    private function reconcile(Account $account, Date $started_at, Date $ended_at, int $reconciled = 1): Reconciliation
+    {
+        return Reconciliation::create([
+            'company_id'        => $this->company->id,
+            'account_id'        => $account->id,
+            'started_at'        => $started_at->copy()->startOfDay(),
+            'ended_at'          => $ended_at->copy()->endOfDay(),
+            'closing_balance'   => 0,
+            'reconciled'        => $reconciled,
+            'created_from'      => 'core::test',
+        ]);
     }
 
     private function countQueries($accounts): int
