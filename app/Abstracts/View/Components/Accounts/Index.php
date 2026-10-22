@@ -3,6 +3,7 @@
 namespace App\Abstracts\View\Components\Accounts;
 
 use App\Abstracts\View\Component;
+use App\Traits\Cloud;
 use App\Traits\ViewComponents;
 
 /**
@@ -14,7 +15,7 @@ use App\Traits\ViewComponents;
  */
 abstract class Index extends Component
 {
-    use ViewComponents;
+    use Cloud, ViewComponents;
 
     public const OBJECT_TYPE = 'account';
     public const DEFAULT_TYPE = 'account';
@@ -81,7 +82,7 @@ abstract class Index extends Component
         $this->checkPermissionCreate = $checkPermissionCreate;
 
         $this->hideCreate = $hideCreate;
-        $this->createRoute = $this->getCreateRoute('banking', $createRoute);
+        $this->createRoute = $this->getCreateRoute($createRoute);
         $this->textCreate = ! empty($textCreate) ? $textCreate : 'general.accounts';
         /* -- Buttons End -- */
 
@@ -108,14 +109,15 @@ abstract class Index extends Component
         $this->setParentData();
     }
 
-    protected function getCreateRoute($type, $createRoute)
+    protected function getCreateRoute($createRoute)
     {
         if (! empty($createRoute)) {
             return $createRoute;
         }
 
-        // Accounts have no entry in config/type.php, so there is no route to read from it
-        $route = $this->moduleIsEnabled('bank-feeds') && user()->can('create-bank-feeds-bank-connections')
+        // Accounts have no entry in config/type.php to read a route from. A company with Bank
+        // Feeds starts a new account at its bank, as the dashboard's widget does (Traits\Cloud)
+        $route = $this->canConnectCloudBankFeeds()
             ? 'bank-feeds.bank-connections.create'
             : 'accounts.create';
 

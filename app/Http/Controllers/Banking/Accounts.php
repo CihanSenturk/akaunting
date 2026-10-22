@@ -10,14 +10,14 @@ use App\Jobs\Banking\UpdateAccount;
 use App\Models\Banking\Account;
 use App\Models\Banking\Transaction;
 use App\Models\Banking\Transfer;
+use App\Traits\Cloud;
 use App\Traits\DateTime;
-use App\Traits\Modules;
 use App\Utilities\Reports;
 use App\Models\Setting\Currency;
 
 class Accounts extends Controller
 {
-    use DateTime, Modules;
+    use Cloud, DateTime;
 
     /**
      * Instantiate a new controller instance.
@@ -93,7 +93,8 @@ class Accounts extends Controller
     {
         $currency = Currency::where('code', '=', default_currency())->first();
 
-        $bank_feed_offer = ! $this->moduleIsEnabled('bank-feeds');
+        // Without Bank Feeds the page offers it before the form for an account kept by hand
+        $bank_feed_offer = ! $this->hasCloudBankFeeds();
 
         return view('banking.accounts.create', compact('currency', 'bank_feed_offer'));
     }
