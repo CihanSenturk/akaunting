@@ -24,6 +24,16 @@ class Account extends Component
     public const CHART_COLOR = '#55588b';
     public const CHART_COLOR_OVERDRAWN = '#cc0000';
 
+    /**
+     * The looks of the card's actions, after the sections of a document's page: what the
+     * account waits on first is green, what it waits on after that is grey, and what can always
+     * be done is a link. Spelled out rather than core's kind="primary", whose margin is meant for
+     * a page's head and breaks the card's row; an app adding to the card reads them from here.
+     */
+    public const ACTION_PRIMARY = 'relative pointer-events-auto px-3 py-1.5 rounded-xl text-sm font-medium leading-6 bg-green hover:bg-green-700 text-white';
+    public const ACTION_SECONDARY = 'relative pointer-events-auto px-3 py-1.5 rounded-xl text-sm font-medium leading-6 bg-gray-100 hover:bg-gray-200';
+    public const ACTION_LINK = 'relative pointer-events-auto text-sm font-medium leading-none text-purple hover:underline';
+
     /** @var \App\Models\Banking\Account */
     public $account;
 
@@ -57,6 +67,42 @@ class Account extends Component
     public $chart;
 
     /**
+     * What an app that keeps the account up to date (bank feeds) put on the card: the bank's
+     * mark, the card's green button, links beside it and a line under them about itself.
+     *
+     * @var string
+     */
+    public $appLogo;
+
+    /** @var string */
+    public $appPrimary;
+
+    /** @var string */
+    public $appLinks;
+
+    /** @var string */
+    public $appStatus;
+
+    /**
+     * Reconciling is the card's green button, or the grey one beside an app's once it has
+     * taken the green.
+     *
+     * @var string
+     */
+    public $reconcileClass;
+
+    /** @var string */
+    public $linkClass = self::ACTION_LINK;
+
+    /**
+     * Whether the row of actions has anything in it; left out otherwise, so the room above the
+     * line under it stays the same as on every card.
+     *
+     * @var bool
+     */
+    public $hasActions;
+
+    /**
      * Create a new component instance.
      *
      * @return void
@@ -83,6 +129,14 @@ class Account extends Component
         $this->historyStart = $this->historyEnd->copy()->subDays(max(count($this->history) - 1, 0));
 
         $this->chart = $this->getChart();
+
+        $this->appLogo = $this->getAppContent('account_card_logo_');
+        $this->appPrimary = $this->getAppContent('account_card_primary_');
+        $this->appLinks = $this->getAppContent('account_card_links_');
+        $this->appStatus = $this->getAppContent('account_card_status_');
+
+        $this->reconcileClass = $this->appPrimary === '' ? static::ACTION_PRIMARY : static::ACTION_SECONDARY;
+        $this->hasActions = $this->getHasActions();
     }
 
     /**
@@ -93,6 +147,30 @@ class Account extends Component
     public function render()
     {
         return view('components.accounts.index.account');
+    }
+
+    /**
+     * What an app pushed onto one of the card's places for this account. The pushes are made
+     * by the app's view composer before the list is drawn, so they are read here once.
+     */
+    protected function getAppContent(string $stack): string
+    {
+        return trim(app('view')->yieldPushContent($stack . $this->account->id));
+    }
+
+    protected function getHasActions(): bool
+    {
+        // An account an app keeps up to date gets its transactions from it, so it is offered
+        // no statement to import (appStatus) and has nothing in the row for that
+        $can_import = $this->appStatus === '' && (bool) user()?->can('create-banking-transactions');
+
+        return $this->appPrimary !== ''
+            || $this->appLinks !== ''
+            || ! empty($this->reconciliation['draft_id'])
+            || ! empty($this->reconciliation['count'])
+            || ! empty($this->reconciliation['earlier'])
+            || ! empty($this->statement)
+            || $can_import;
     }
 
     /**
