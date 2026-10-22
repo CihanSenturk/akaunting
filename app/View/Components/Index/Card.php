@@ -25,18 +25,28 @@ class Card extends Component
     public $hideBulkAction;
 
     /**
+     * How the body of the card is laid out. By default the figures sit on one line at the
+     * bottom of the card; a card with more to say can lay them out on its own.
+     *
+     * @var string
+     */
+    public $bodyClass;
+
+    /**
      * Create a new component instance.
      *
      * @return void
      */
     public function __construct(
-        $model = false, string $href = '', string $label = '', bool $hideBulkAction = false
+        $model = false, string $href = '', string $label = '', bool $hideBulkAction = false,
+        string $bodyClass = 'flex items-end justify-between mt-6'
     ) {
         $this->model = $model;
         $this->href = $href;
 
         $this->label = $this->getLabel($label);
         $this->hideBulkAction = $hideBulkAction || empty($model);
+        $this->bodyClass = $bodyClass;
     }
 
     /**

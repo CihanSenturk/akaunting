@@ -17,6 +17,14 @@ return [
     'create_report'         => 'Hesap performansını görmek istiyorsanız, gelir - gider raporu örneği oluşturabilirsiniz.',
     'banks'                 => 'Banka|Bankalar',
     'credit_cards'          => 'Kredi Kartı|Kredi Kartları',
+    'total_balance'         => 'Toplam (:currency)',
+    'to_reconcile'          => 'Mutabakat Bekleyen (Son :days Gün)',
+    'reconcile_items'       => ':count Kaydı Mutabakat Yap|:count Kaydı Mutabakat Yap',
+    'statement_balance'     => 'Ekstre Bakiyesi',
+    'import_statement'      => 'Banka Ekstresi İçe Aktar',
+    'import_into'           => 'Dosyadaki işlemler :account hesabına eklenecek.',
+    'balance_history'       => 'Bakiye · :days Gün',
+    'balance_history_label' => ':account hesabının son :days gündeki bakiyesi, :start - :end',
 
     'form_description' => [
         'general'           => 'Negatif açılış bakiyesi için kredi kartı türünü kullanın. Hesapları doğru bir şekilde mutabakat yapmak için numara önemlidir. Varsayılan hesap, aksi seçilmediği takdirde tüm işlemleri kaydeder.',

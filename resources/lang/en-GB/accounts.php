@@ -17,6 +17,14 @@ return [
     'create_report'         => 'If you want to see account performance. You can create Income vs Expense report instance.',
     'banks'                 => 'Bank|Banks',
     'credit_cards'          => 'Credit Card|Credit Cards',
+    'total_balance'         => 'Total in :currency',
+    'to_reconcile'          => 'To Reconcile (Last :days Days)',
+    'reconcile_items'       => 'Reconcile :count Item|Reconcile :count Items',
+    'statement_balance'     => 'Statement Balance',
+    'import_statement'      => 'Import a Bank Statement',
+    'import_into'           => 'The transactions in the file will be added to the :account account.',
+    'balance_history'       => 'Balance · :days Days',
+    'balance_history_label' => 'Balance of :account over the last :days days, from :start to :end',
 
     'bank_feed' => [
         'title'             => 'Connect Your Bank Account',

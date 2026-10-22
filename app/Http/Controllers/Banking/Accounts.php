@@ -26,7 +26,7 @@ class Accounts extends Controller
     {
         parent::__construct();
 
-        $this->middleware('permission:create-banking-transactions')->only('createIncome', 'createExpense');
+        $this->middleware('permission:create-banking-transactions')->only('createIncome', 'createExpense', 'importTransactions');
         $this->middleware('permission:create-banking-transfers')->only('createTransfer');
         $this->middleware('permission:read-banking-accounts')->only('seePerformance');
         $this->middleware('permission:read-settings-currencies')->only('currency');
@@ -39,13 +39,14 @@ class Accounts extends Controller
      */
     public function index()
     {
-        $accounts = Account::withSum('income_transactions', 'amount')->withSum('expense_transactions', 'amount')->withCount('transactions')->collect();
+        // The currency is read by every card, so it is loaded with the page rather than per account
+        $accounts = Account::with('currency')
+            ->withSum('income_transactions', 'amount')
+            ->withSum('expense_transactions', 'amount')
+            ->withCount('transactions')
+            ->collect();
 
-        $create_url = $this->moduleIsEnabled('bank-feeds') && user()->can('create-bank-feeds-bank-connections')
-            ? route('bank-feeds.bank-connections.create')
-            : route('accounts.create');
-
-        return $this->response('banking.accounts.index', compact('accounts', 'create_url'));
+        return $this->response('banking.accounts.index', compact('accounts'));
     }
 
     /**
@@ -277,6 +278,22 @@ class Accounts extends Controller
         $data['from_account_id'] = $account->id;
 
         return redirect()->route('transfers.create')->withInput($data);
+    }
+
+    /**
+     * The transaction import, already pointed at this account.
+     *
+     * Carried in the address rather than in the session, so the page still knows the account
+     * after a reload or a failed import that sends the user back to it.
+     */
+    public function importTransactions(Account $account)
+    {
+        $data['account_id'] = $account->id;
+
+        return redirect()->route('import.create', [
+            'group'         => 'banking',
+            'type'          => 'transactions',
+        ])->withInput($data);
     }
 
     public function seePerformance(Account $account)

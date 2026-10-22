@@ -1,4 +1,5 @@
-<div {{ $attributes->merge(['class' => 'relative flex flex-col p-4 bg-white border border-gray-200 rounded-xl hover:bg-gray-100']) }}>
+{{-- Lightened on hover only when the whole card leads somewhere; otherwise it reads as a click that does nothing --}}
+<div {{ $attributes->merge(['class' => 'relative flex flex-col p-4 bg-white border border-gray-200 rounded-xl' . ($href ? ' hover:bg-gray-100' : '')]) }}>
     @if ($href)
         <a href="{{ $href }}" class="absolute inset-0" aria-label="{{ $label }}"></a>
     @endif
@@ -42,7 +43,7 @@
     </div>
 
     @if (! empty($slot) && $slot->isNotEmpty())
-        <div class="relative flex items-end justify-between mt-6 pointer-events-none">
+        <div class="relative {{ $bodyClass }} pointer-events-none">
             {!! $slot !!}
         </div>
     @endif
