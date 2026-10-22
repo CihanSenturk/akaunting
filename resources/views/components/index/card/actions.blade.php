@@ -3,10 +3,17 @@
         <span class="material-icons-outlined pointer-events-none">more_horiz</span>
     </x-slot>
 
-    @php($divider = false)
+    @php
+        $divider = false;
 
-    @foreach ($actions as $action)
-        @php($type = ! empty($action['type']) ? $action['type'] : 'link')
+        $types = array_map(fn ($action) => ! empty($action['type']) ? $action['type'] : 'link', $actions);
+
+        $first = array_flip(array_reverse($types, true));
+        $last = array_flip($types);
+    @endphp
+
+    @foreach ($actions as $key => $action)
+        @php($type = $types[$key])
 
         @if ($type === 'divider')
             {{-- Drawn only where something came before it, so a hidden action does not leave
@@ -20,34 +27,40 @@
             @continue
         @endif
 
-        @if (! empty($action['permission']) && user()->cannot($action['permission']))
-            @continue
+        @if ($first[$type] === $key)
+            @stack($stack . '_' . $type . '_start')
         @endif
 
-        @php($divider = true)
+        @if (empty($action['permission']) || user()->can($action['permission']))
+            @php($divider = true)
 
-        @switch($type)
-            @case('delete')
-                <x-delete-link :model="$action['model']" :route="$action['route']" />
-                @break
+            @switch($type)
+                @case('delete')
+                    <x-delete-link :model="$action['model']" :route="$action['route']" />
+                    @break
 
-            @case('button')
-                @php($action_id = $action['attributes']['id'] ?? '')
+                @case('button')
+                    @php($action_id = $action['attributes']['id'] ?? '')
 
-                <div class="w-full flex items-center text-purple px-2 h-9 leading-9 whitespace-nowrap" {!! $action['attributes'] ?? null !!}>
-                    <button type="button" class="w-full h-full flex items-center rounded-md px-2 text-sm hover:bg-lilac-100">
+                    <div class="w-full flex items-center text-purple px-2 h-9 leading-9 whitespace-nowrap" {!! $action['attributes'] ?? null !!}>
+                        <button type="button" class="w-full h-full flex items-center rounded-md px-2 text-sm hover:bg-lilac-100">
+                            {{ $action['title'] }}
+                        </button>
+                    </div>
+                    @break
+
+                @default
+                    @php($action_id = $action['attributes']['id'] ?? '')
+
+                    <x-dropdown.link href="{{ $action['url'] }}" id="{{ $action_id }}">
                         {{ $action['title'] }}
-                    </button>
-                </div>
-                @break
+                    </x-dropdown.link>
+            @endswitch
+        @endif
 
-            @default
-                @php($action_id = $action['attributes']['id'] ?? '')
-
-                <x-dropdown.link href="{{ $action['url'] }}" id="{{ $action_id }}">
-                    {{ $action['title'] }}
-                </x-dropdown.link>
-        @endswitch
+        @if ($last[$type] === $key)
+            @stack($stack . '_' . $type . '_end')
+        @endif
     @endforeach
 
     @stack($stack)
