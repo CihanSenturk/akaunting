@@ -113,7 +113,7 @@ class Account extends Component
         $chart->setType('area')
             ->setDefaultLocale($this->getDefaultLocaleOfChart())
             ->setLocales($this->getLocaleTranslationOfChart())
-            ->setHeight(64)
+            ->setHeight('100%')
             ->setSparkline(['enabled' => true])
             ->setLabels($labels)
             ->setColors([$this->isOverdrawn ? static::CHART_COLOR_OVERDRAWN : static::CHART_COLOR])

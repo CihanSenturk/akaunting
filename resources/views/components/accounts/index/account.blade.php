@@ -6,7 +6,7 @@
      the way the other lists say it --}}
 <x-index.card
     :model="$account"
-    body-class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center mt-4 pt-4 border-t border-gray-200"
+    body-class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center mt-4 pt-5 border-t border-gray-200"
 >
     <x-slot name="title">
         {{-- The name and the number are what an account is told apart by, so the name leads
@@ -77,7 +77,7 @@
         @else
             {{-- An account kept by hand can always take another statement, so the import sits
                  beside whatever else the account is waiting on --}}
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 min-h-9">
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-2 leading-none">
                 @if ($unreconciled)
                     @can('create-banking-reconciliations')
                         <x-link
@@ -98,8 +98,8 @@
                         </span>
                     @endif
                 @elseif (! empty($statement))
-                    <span class="flex items-center text-sm font-medium text-green">
-                        <span class="material-icons-outlined text-lg ltr:mr-1 rtl:ml-1" aria-hidden="true">check_circle</span>
+                    <span class="flex items-center text-sm font-medium leading-none text-green">
+                        <span class="material-icons-outlined text-lg leading-none ltr:mr-1 rtl:ml-1" aria-hidden="true">check_circle</span>
 
                         {{ trans('reconciliations.reconciled') }}
                     </span>
@@ -108,7 +108,7 @@
                 @can('create-banking-transactions')
                     <x-link
                         href="{{ route('accounts.import-transactions', $account->id) }}"
-                        class="relative pointer-events-auto text-sm font-medium text-purple hover:underline"
+                        class="relative pointer-events-auto text-sm font-medium leading-none text-purple hover:underline"
                         override="class"
                         id="index-account-import-{{ $account->id }}"
                     >
@@ -151,7 +151,7 @@
         {{-- Drawn with the charts of the dashboard; hovered, so it takes the pointer back from
              the card it sits in --}}
         <figure
-            class="min-w-0 pointer-events-auto"
+            class="flex flex-col self-stretch min-w-0 pointer-events-auto"
             aria-label="{{ trans('accounts.balance_history_label', [
                 'account'   => $account->name,
                 'days'      => count($history),
@@ -159,7 +159,14 @@
                 'end'       => company_date($historyEnd),
             ]) }}"
         >
-            {!! $chart->container() !!}
+            {{-- Beside the figures the chart takes their height and adds none of its own, so the
+                 room above, between and below them stays the same on every card, whatever it
+                 shows; under them, on a phone, it has a height of its own --}}
+            <div class="relative grow h-14 lg:h-auto">
+                <div class="absolute inset-0">
+                    {!! $chart->container() !!}
+                </div>
+            </div>
 
             <figcaption class="flex justify-between mt-1 text-xs text-black-400">
                 <span>{{ $historyStart->translatedFormat('j M') }}</span>
