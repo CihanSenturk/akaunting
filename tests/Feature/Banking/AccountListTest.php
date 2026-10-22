@@ -30,6 +30,58 @@ class AccountListTest extends FeatureTestCase
             ->assertSeeInOrder(['index-account-group-bank', $bank->name, 'index-account-group-credit_card', $card->name], false);
     }
 
+    public function testItShouldOfferSortingAndSelectingTheWholePage()
+    {
+        $this->loginAs();
+
+        $account = Account::factory()->enabled()->create();
+
+        $this->get(route('accounts.index'))
+            ->assertStatus(200)
+            ->assertSee('index-sort-account', false)
+            ->assertSee('table-check-all', false)
+            ->assertSee('bulk-action-' . $account->id, false);
+    }
+
+    public function testItShouldSortWithinEachGroup()
+    {
+        $this->loginAs();
+
+        Account::factory()->enabled()->create(['type' => 'bank', 'name' => 'B Bank']);
+        Account::factory()->enabled()->create(['type' => 'bank', 'name' => 'A Bank']);
+
+        $this->get(route('accounts.index', ['sort' => 'name', 'direction' => 'desc']))
+            ->assertStatus(200)
+            ->assertSeeInOrder(['B Bank', 'A Bank']);
+    }
+
+    public function testItShouldHandTheHiddenBulkActionDownToTheCards()
+    {
+        $this->loginAs();
+
+        $account = Account::factory()->enabled()->create();
+
+        // As a page or an app would hide it, on the outermost part
+        $this->blade('<x-accounts.index.content :accounts="$accounts" hide-bulk-action />', [
+            'accounts' => Account::with('currency')->paginate(),
+        ])
+            ->assertDontSee('table-check-all', false)
+            ->assertDontSee('bulk-action-' . $account->id, false)
+            ->assertSee($account->name);
+    }
+
+    public function testItShouldShowTheEmptyPageWithoutAccounts()
+    {
+        $this->loginAs();
+
+        Account::query()->get()->each->delete();
+
+        $this->get(route('accounts.index'))
+            ->assertStatus(200)
+            ->assertSeeText(trans('general.empty.accounts'))
+            ->assertDontSee('index-sort-account', false);
+    }
+
     public function testItShouldOfferToReconcileTheWaitingTransactions()
     {
         $this->loginAs();

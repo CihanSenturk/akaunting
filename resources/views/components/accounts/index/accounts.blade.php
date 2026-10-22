@@ -1,4 +1,12 @@
-<div class="flex flex-col gap-8 mt-6">
+{{-- Sorted and selected for the whole page, above the groups: each group keeps the order the
+     page is sorted by --}}
+<x-index.cards
+    sort-id="index-sort-account"
+    :sortable="$sortable"
+    :columns="1"
+    :bulk-action="! $hideBulkAction"
+>
+<div class="flex flex-col gap-8">
     @stack('account_groups_start')
 
     @foreach ($getGroupedAccounts() as $group => $group_accounts)
@@ -28,3 +36,4 @@
 
     @stack('account_groups_end')
 </div>
+</x-index.cards>

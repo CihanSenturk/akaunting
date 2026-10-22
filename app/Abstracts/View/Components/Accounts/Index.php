@@ -39,10 +39,7 @@ abstract class Index extends Component
     public $textCreate;
 
     /** @var bool */
-    public $hideSummary;
-
-    /** @var array */
-    public $summaryItems;
+    public $hideEmptyPage;
 
     /** @var bool */
     public $hideSearchString;
@@ -59,13 +56,20 @@ abstract class Index extends Component
     /** @var bool */
     public $hidePagination;
 
+    /**
+     * The columns the cards can be sorted by, as column => title.
+     *
+     * @var array
+     */
+    public $sortable;
+
     public function __construct(
         $accounts = [],
         string $permissionCreate = '', bool $checkPermissionCreate = true,
         bool $hideCreate = false, string $createRoute = '', string $textCreate = '',
-        bool $hideSearchString = false, bool $hideBulkAction = false,
+        bool $hideEmptyPage = false, bool $hideSearchString = false, bool $hideBulkAction = false,
         string $searchStringModel = '', string $bulkActionClass = '',
-        bool $hidePagination = false
+        bool $hidePagination = false, array $sortable = []
     ) {
         /* -- Main Start -- */
         $this->accounts = ! empty($accounts) ? $accounts : collect();
@@ -82,6 +86,7 @@ abstract class Index extends Component
         /* -- Buttons End -- */
 
         /* -- Content Start -- */
+        $this->hideEmptyPage = $hideEmptyPage;
         $this->hideSearchString = $hideSearchString;
         $this->hideBulkAction = $hideBulkAction;
 
@@ -90,6 +95,13 @@ abstract class Index extends Component
         $this->bulkActionClass = ! empty($bulkActionClass) ? $bulkActionClass : 'App\BulkActions\Banking\Accounts';
 
         $this->hidePagination = $hidePagination;
+
+        $this->sortable = ! empty($sortable) ? $sortable : [
+            'name'      => trans('general.name'),
+            'number'    => trans('accounts.number'),
+            'bank_name' => trans('accounts.bank_name'),
+            'balance'   => trans('accounts.current_balance'),
+        ];
         /* -- Content End -- */
 
         // Set Parent data
@@ -102,12 +114,7 @@ abstract class Index extends Component
             return $createRoute;
         }
 
-        $route = $this->getRouteFromConfig($type, 'create');
-
-        if (! empty($route)) {
-            return $route;
-        }
-
+        // Accounts have no entry in config/type.php, so there is no route to read from it
         $route = $this->moduleIsEnabled('bank-feeds') && user()->can('create-bank-feeds-bank-connections')
             ? 'bank-feeds.bank-connections.create'
             : 'accounts.create';

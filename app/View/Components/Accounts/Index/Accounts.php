@@ -16,8 +16,8 @@ class Accounts extends Component
     public $groups;
 
     /**
-     * Read once per page by getOverview(); kept out of the public properties so it is not
-     * handed down to the parts that never use it.
+     * What each card shows beside the account itself, read once for the whole page
+     * (getOverview()) unless it is handed in.
      *
      * @var array|null
      */
@@ -28,7 +28,10 @@ class Accounts extends Component
         array $groups = [],
         ?array $overview = null
     ) {
-        $this->accounts = $accounts;
+        // The settings of the page (a hidden bulk action, the sorting) come down from the part
+        // this is put in, as they do on the other lists
+        parent::__construct($accounts ?? []);
+
         $this->groups = $this->getGroups($groups);
         $this->overview = $overview;
         $this->overview = $this->getOverview();
@@ -83,7 +86,7 @@ class Accounts extends Component
 
     /**
      * What each account card shows beside the account itself, read for the whole page at
-     * once and only when the cards ask for it, so the buttons and the summary cost nothing.
+     * once rather than per card. Only this part reads it, so the buttons cost nothing.
      *
      * @return array<int, array>
      */

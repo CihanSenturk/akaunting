@@ -3,7 +3,7 @@
 namespace App\View\Components\Accounts\Index;
 
 use Akaunting\Apexcharts\Chart;
-use App\Abstracts\View\Component;
+use App\Abstracts\View\Components\Accounts\Index as Component;
 use App\Traits\Charts;
 use App\Utilities\Date;
 
@@ -65,6 +65,9 @@ class Account extends Component
         $account,
         array $overview = []
     ) {
+        // The settings of the page, a hidden bulk action among them, from the parts above
+        parent::__construct();
+
         $this->account = $account;
         $this->isDefault = setting('default.account') == $account->id;
 
