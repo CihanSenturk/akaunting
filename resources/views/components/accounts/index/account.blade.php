@@ -54,7 +54,7 @@
                 {!! $logo !!}
             @elseif (! empty($account->bank_name))
                 {{-- Given the height a bank's mark takes, so every card's corner lines up the same --}}
-                <div class="flex items-center h-12 ltr:mr-6 rtl:ml-6">
+                <div class="flex items-center h-10 ltr:mr-6 rtl:ml-6">
                     <x-tooltip id="tooltip-account-bank-{{ $account->id }}" placement="top" whitespace="whitespace-nowrap" message="{{ $account->bank_name }}">
                         <span class="block max-w-32 text-sm text-black-400 truncate">
                             {{ $account->bank_name }}

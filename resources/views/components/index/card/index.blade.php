@@ -6,7 +6,7 @@
 
     {{-- Positioned, so it paints over the link it follows, but with no layer of its own: one
          would trap an open menu below the cards that come after this one --}}
-    <div class="relative flex items-start justify-between pointer-events-none">
+    <div class="relative flex items-center justify-between pointer-events-none">
         <div class="flex items-start min-w-0">
             @if (! $hideBulkAction)
                 <div class="pointer-events-auto">
