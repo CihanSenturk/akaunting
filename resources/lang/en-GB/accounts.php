@@ -17,8 +17,6 @@ return [
     'create_report'         => 'If you want to see account performance. You can create Income vs Expense report instance.',
     'banks'                 => 'Bank|Banks',
     'credit_cards'          => 'Credit Card|Credit Cards',
-    'total_balance'         => 'Total in :currency',
-    'to_reconcile'          => 'To Reconcile (Last :days Days)',
     'reconcile_items'       => 'Reconcile :count Item|Reconcile :count Items',
     'continue_reconciliation' => 'Continue Reconciliation',
     'earlier_unreconciled'  => ':count Earlier Transaction|:count Earlier Transactions',

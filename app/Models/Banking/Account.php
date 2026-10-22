@@ -116,25 +116,6 @@ class Account extends Model
     }
 
     /**
-     * The number with only its ends left readable, the way a bank prints it on a statement.
-     *
-     * A short number has nothing worth hiding and would be unrecognisable once cut, so it is
-     * shown as it is.
-     *
-     * @return string
-     */
-    public function getMaskedNumberAttribute()
-    {
-        $number = preg_replace('/\s+/', '', (string) $this->number);
-
-        if (mb_strlen($number) <= 8) {
-            return (string) $this->number;
-        }
-
-        return mb_substr($number, 0, 4) . ' •••• ' . mb_substr($number, -4);
-    }
-
-    /**
      * Get the current balance.
      *
      * @return string

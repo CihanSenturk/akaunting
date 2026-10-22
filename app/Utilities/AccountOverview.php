@@ -4,7 +4,6 @@ namespace App\Utilities;
 
 use App\Models\Banking\Reconciliation;
 use App\Models\Banking\Transaction;
-use App\Traits\Currencies;
 use App\Traits\Transactions;
 use Illuminate\Support\Collection;
 
@@ -16,7 +15,7 @@ use Illuminate\Support\Collection;
  */
 class AccountOverview
 {
-    use Currencies, Transactions;
+    use Transactions;
 
     /**
      * The figures of each account, keyed by its id.
@@ -62,18 +61,6 @@ class AccountOverview
         }
 
         return $overview;
-    }
-
-    /**
-     * The balance of the accounts in the default currency, as each one's own rate has it.
-     *
-     * A disabled account is left out: it no longer holds money the company counts on.
-     */
-    public function getTotal(Collection $accounts): float
-    {
-        return (float) $accounts
-            ->filter(fn ($account) => $account->enabled)
-            ->sum(fn ($account) => $this->convertToDefault((float) $account->balance, $account->currency_code, $account->currency->rate ?? 1));
     }
 
     public function isReconciliationEnabled(): bool

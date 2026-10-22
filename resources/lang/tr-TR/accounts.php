@@ -17,8 +17,6 @@ return [
     'create_report'         => 'Hesap performansını görmek istiyorsanız, gelir - gider raporu örneği oluşturabilirsiniz.',
     'banks'                 => 'Banka|Bankalar',
     'credit_cards'          => 'Kredi Kartı|Kredi Kartları',
-    'total_balance'         => 'Toplam (:currency)',
-    'to_reconcile'          => 'Mutabakat Bekleyen (Son :days Gün)',
     'reconcile_items'       => ':count Kaydı Mutabakat Yap|:count Kaydı Mutabakat Yap',
     'continue_reconciliation' => 'Mutabakata Devam Et',
     'earlier_unreconciled'  => ':count Önceki İşlem|:count Önceki İşlem',

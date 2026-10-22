@@ -68,7 +68,7 @@
 
     {{-- Every card is as tall as one with a button, a line about its feed and its balance;
          a card with less in it spreads it evenly over that height rather than crowding it --}}
-    <div class="flex flex-col justify-evenly gap-4 min-w-0 min-h-28">
+    <div class="flex flex-col justify-evenly gap-4 min-w-0 min-h-20">
         {{-- Reconciling stays on every card: an account an app keeps up to date can have
              transactions entered by hand as well. Every action is disabled once clicked so it is
              not sent twice: the green button shows the loading dots, which are white and would
