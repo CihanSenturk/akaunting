@@ -82,6 +82,49 @@ class AccountListTest extends FeatureTestCase
             ->assertDontSee('index-sort-account', false);
     }
 
+    public function testItShouldOpenEveryPageTheCardLeadsTo()
+    {
+        $this->loginAs();
+
+        $account = Account::factory()->enabled()->default_currency()->create(['type' => 'bank']);
+
+        $this->createTransaction($account, ['reconciled' => 0]);
+
+        $html = $this->get(route('accounts.index'))->assertStatus(200)->getContent();
+
+        // Every link on the card and in its menu, read off the page as the user would click them
+        $dom = new \DOMDocument();
+        @$dom->loadHTML($html);
+
+        $links = [];
+
+        // The menu puts the id on the entry and the link inside it
+        foreach ((new \DOMXPath($dom))->query('//*[@id]') as $element) {
+            $id = $element->getAttribute('id');
+
+            if (! preg_match('/^index-(account|line-actions)-[a-z-]+-' . $account->id . '$/', $id)) {
+                continue;
+            }
+
+            $anchor = $element->tagName === 'a' ? $element : $element->getElementsByTagName('a')->item(0);
+
+            if ($anchor && $anchor->getAttribute('href')) {
+                $links[$id] = $anchor->getAttribute('href');
+            }
+        }
+
+        // The ones that change the account are covered by their own tests
+        $links = array_filter($links, fn ($url, $id) => ! str_contains($id, 'disable') && ! str_contains($id, 'enable'), ARRAY_FILTER_USE_BOTH);
+
+        $this->assertArrayHasKey('index-account-reconcile-' . $account->id, $links);
+        $this->assertArrayHasKey('index-account-import-' . $account->id, $links);
+        $this->assertArrayHasKey('index-line-actions-new-income-account-' . $account->id, $links);
+
+        foreach ($links as $id => $url) {
+            $this->followingRedirects()->get($url)->assertStatus(200);
+        }
+    }
+
     public function testItShouldOfferToReconcileTheWaitingTransactions()
     {
         $this->loginAs();
