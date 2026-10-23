@@ -1,7 +1,7 @@
 @if ($bulkAction || $sortable)
     <div class="flex flex-wrap items-center justify-between py-4">
         @if ($bulkAction)
-            <div class="flex items-center">
+            <div class="flex items-center leading-3">
                 <x-index.bulkaction.all />
 
                 {{-- The box on its own says nothing about what it would select, and the bar
