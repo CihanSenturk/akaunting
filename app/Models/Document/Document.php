@@ -197,10 +197,11 @@ class Document extends Model
     public function documentNumberSortable(Builder $query, string $direction): Builder
     {
         $direction = strtolower($direction) === 'asc' ? 'asc' : 'desc';
-        $table = $query->getQuery()->from;
         $grammar = $query->getQuery()->getGrammar();
-        $documentNumber = $grammar->wrap($table . '.document_number');
-        $documentType = $grammar->wrap($table . '.type');
+        // The columns are the document's own. Sorted through a relation, as the transaction list sorts by
+        // "document.document_number", the query is the parent's and its table is not the documents one.
+        $documentNumber = $grammar->wrap($this->qualifyColumn('document_number'));
+        $documentType = $grammar->wrap($this->qualifyColumn('type'));
         $driver = $query->getConnection()->getDriverName();
         $substringFunction = $driver === 'mysql' ? 'SUBSTRING' : 'SUBSTR';
         $integerType = $driver === 'mysql' ? 'UNSIGNED' : 'INTEGER';

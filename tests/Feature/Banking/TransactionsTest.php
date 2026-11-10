@@ -45,6 +45,47 @@ class TransactionsTest extends FeatureTestCase
             ->assertSeeText($invoice->document_number);
     }
 
+    /**
+     * The Document column of the list sorts through the "document" relation. The number used to be read from the
+     * transactions table, which has no such column, so the page failed with an SQL error (Sentry 1V0S).
+     */
+    public function testItShouldSortTransactionListByDocumentNumber()
+    {
+        $this->loginAs();
+
+        foreach (['INV-0992', 'INV-0239', 'INV-1117'] as $document_number) {
+            $invoice = Document::factory()->invoice()->create([
+                'company_id' => $this->company->id,
+                'document_number' => $document_number,
+            ]);
+
+            Transaction::factory()->income()->create([
+                'company_id' => $this->company->id,
+                'contact_id' => $invoice->contact_id,
+                'document_id' => $invoice->id,
+            ]);
+        }
+
+        $sorted = fn (string $direction) => $this->get(route('transactions.index', [
+            'sort' => 'document.document_number',
+            'direction' => $direction,
+        ]));
+
+        $numbers = fn ($transactions) => $transactions->getCollection()
+            ->whereNotNull('document_id')
+            ->map(fn ($transaction) => $transaction->document->document_number)
+            ->values()
+            ->all();
+
+        $sorted('asc')
+            ->assertStatus(200)
+            ->assertViewHas('transactions', fn ($transactions) => $numbers($transactions) === ['INV-0239', 'INV-0992', 'INV-1117']);
+
+        $sorted('desc')
+            ->assertStatus(200)
+            ->assertViewHas('transactions', fn ($transactions) => $numbers($transactions) === ['INV-1117', 'INV-0992', 'INV-0239']);
+    }
+
     public function testItShouldSeeTransactionShowPage()
     {
         $request = $this->getRequest();
