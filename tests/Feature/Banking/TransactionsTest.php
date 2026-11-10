@@ -54,7 +54,8 @@ class TransactionsTest extends FeatureTestCase
         $this->loginAs();
 
         foreach (['INV-0992', 'INV-0239', 'INV-1117'] as $document_number) {
-            $invoice = Document::factory()->invoice()->create([
+            // Sent, as the factory adds payments of its own to a partial or paid invoice
+            $invoice = Document::factory()->invoice()->sent()->create([
                 'company_id' => $this->company->id,
                 'document_number' => $document_number,
             ]);
